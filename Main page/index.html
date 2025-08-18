@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>VerifyAI</span>
+                </div>
+                <button class="mobile-toggle" id="sidebarToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <div class="input-section">
+                    <h3>Input Method</h3>
+                    <div class="input-tabs">
+                        <button class="tab-btn active" data-tab="text">Text</button>
+                        <button class="tab-btn" data-tab="image">Image</button>
+                        <button class="tab-btn" data-tab="url">URL</button>
+                    </div>
+
+                    <div class="tab-content active" id="text-tab">
+                        <textarea placeholder="Enter news text to analyze..."></textarea>
+                    </div>
+                    <div class="tab-content" id="image-tab">
+                        <div class="file-upload">
+                            <label for="image-upload">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Upload Image</span>
+                            </label>
+                            <input type="file" id="image-upload" accept="image/*">
+                        </div>
+                        <div class="preview-container" id="image-preview"></div>
+                    </div>
+                    <div class="tab-content" id="url-tab">
+                        <input type="text" placeholder="Enter news URL...">
+                    </div>
+
+                    <button class="detect-btn">
+                        <i class="fas fa-search"></i> Detect Fake News
+                    </button>
+                </div>
+
+                <!-- Controls section removed as requested -->
+
+                <div class="feed-controls">
+                    <h3>Live Feed Source</h3>
+                    <select>
+                        <option value="all">All Sources</option>
+                        <option value="bbc">BBC News</option>
+                        <option value="cnn">CNN</option>
+                        <option value="fox">Fox News</option>
+                        <option value="reuters">Reuters</option>
+                    </select>
+                </div>
+
+                <div class="user-section">
+                    <div class="user-info">
+                        <div class="user-avatar">
+                            <img src="https://ui-avatars.com/api/?name=User&background=008080&color=fff" alt="User">
+                        </div>
+                        <div class="user-details">
+                            <h4>Welcome, User</h4>
+                            <p>Researcher</p>
+                        </div>
+                    </div>
+                    <button class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="main-header">
+                <h1 class="gradient-text">Hybrid Deep Learning with Explainable AI for Fake News Detection</h1>
+                <div class="header-actions">
+                    <button class="export-btn">
+                        <i class="fas fa-download"></i> Export Results
+                    </button>
+                    <div class="theme-toggle">
+                        <i class="fas fa-moon"></i>
+                        <i class="fas fa-sun"></i>
+                        <div class="toggle-ball"></div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-container">
+                <div class="left-column">
+                    <div class="result-card">
+                        <div class="card-header">
+                            <h2>Analysis Result</h2>
+                            <span class="timestamp">Last updated: <time datetime="2023-07-15T14:30:00">July 15, 2023 14:30</time></span>
+                        </div>
+                        <div class="result-content">
+                            <div class="prediction-result">
+                                <div class="prediction-badge fake">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Likely Fake</span>
+                                </div>
+                                <div class="confidence-meter">
+                                    <div class="meter-label">Confidence: 87%</div>
+                                    <div class="meter-bar">
+                                        <div class="meter-fill" style="width: 87%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="content-preview">
+                                <h3>Analyzed Content</h3>
+                                <p>Scientists discover that drinking coffee mixed with lemon juice in the morning can help you lose up to 5kg in a week. This miracle mixture boosts metabolism by 500% and melts fat while you sleep...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visualizations section removed as requested -->
+                </div>
+
+                <div class="right-column">
+                    <div class="metrics-card">
+                        <div class="card-header">
+                            <h2>Performance Metrics</h2>
+                            <div class="refresh-btn">
+                                <i class="fas fa-sync-alt"></i>
+                            </div>
+                        </div>
+                        <div class="metrics-content">
+                            <div class="metrics-grid">
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-bullseye"></i>
+                                    </div>
+                                    <div class="metric-data">
+                                        <span class="metric-value">94.2%</span>
+                                        <span class="metric-label">Accuracy</span>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div class="metric-data">
+                                        <span class="metric-value">92.8%</span>
+                                        <span class="metric-label">Precision</span>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    <div class="metric-data">
+                                        <span class="metric-value">95.1%</span>
+                                        <span class="metric-label">Recall</span>
+                                    </div>
+                                </div>
+                                <div class="metric-item">
+                                    <div class="metric-icon">
+                                        <i class="fas fa-balance-scale"></i>
+                                    </div>
+                                    <div class="metric-data">
+                                        <span class="metric-value">93.9%</span>
+                                        <span class="metric-label">F1 Score</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="metricsChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="live-feed-card">
+                        <div class="card-header">
+                            <h2>Live News Feed</h2>
+                            <div class="feed-controls">
+                                <span class="feed-status">Auto-updating</span>
+                                <div class="feed-toggle">
+                                    <input type="checkbox" id="feed-toggle" checked>
+                                    <label for="feed-toggle"></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="feed-content">
+                            <div class="feed-item">
+                                <div class="feed-badge real">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Real</span>
+                                </div>
+                                <h3 class="feed-title">Global temperatures hit record high for third consecutive month</h3>
+                                <div class="feed-meta">
+                                    <span class="feed-source">Reuters</span>
+                                    <span class="feed-time">10 minutes ago</span>
+                                </div>
+                            </div>
+                            <div class="feed-item">
+                                <div class="feed-badge fake">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Fake</span>
+                                </div>
+                                <h3 class="feed-title">New study finds common household item causes cancer in 90% of users</h3>
+                                <div class="feed-meta">
+                                    <span class="feed-source">Health News Daily</span>
+                                    <span class="feed-time">25 minutes ago</span>
+                                </div>
+                            </div>
+                            <div class="feed-item">
+                                <div class="feed-badge real">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Real</span>
+                                </div>
+                                <h3 class="feed-title">Tech company announces new AI chip with 30% performance improvement</h3>
+                                <div class="feed-meta">
+                                    <span class="feed-source">TechCrunch</span>
+                                    <span class="feed-time">42 minutes ago</span>
+                                </div>
+                            </div>
+                            <div class="feed-item">
+                                <div class="feed-badge uncertain">
+                                    <i class="fas fa-question-circle"></i>
+                                    <span>Uncertain</span>
+                                </div>
+                                <h3 class="feed-title">Government considering new tax policy for remote workers</h3>
+                                <div class="feed-meta">
+                                    <span class="feed-source">Financial Times</span>
+                                    <span class="feed-time">1 hour ago</span>
+                                </div>
+                            </div>
+                            <div class="feed-item">
+                                <div class="feed-badge fake">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    <span>Fake</span>
+                                </div>
+                                <h3 class="feed-title">Scientists confirm aliens have been living among us for decades</h3>
+                                <div class="feed-meta">
+                                    <span class="feed-source">World News Network</span>
+                                    <span class="feed-time">1 hour ago</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="history-card">
+                        <div class="card-header">
+                            <h2>Detection History</h2>
+                            <button class="clear-btn">
+                                <i class="fas fa-trash-alt"></i> Clear
+                            </button>
+                        </div>
+                        <div class="history-content">
+                            <div class="history-item">
+                                <div class="history-badge fake"></div>
+                                <div class="history-text">"Drinking this tea will cure diabetes in 3 days..."</div>
+                                <div class="history-time">Today, 10:23 AM</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-badge real"></div>
+                                <div class="history-text">"NASA's Mars rover discovers new evidence of ancient water..."</div>
+                                <div class="history-time">Today, 09:15 AM</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-badge fake"></div>
+                                <div class="history-text">"5G towers linked to spread of new virus variant..."</div>
+                                <div class="history-time">Yesterday, 4:45 PM</div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-badge real"></div>
+                                <div class="history-text">"New study shows benefits of Mediterranean diet for heart health..."</div>
+                                <div class="history-time">Yesterday, 2:30 PM</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="app-footer">
+        <div class="footer-content">
+            <p>© 2023 Hybrid Deep Learning with Explainable AI for Fake News Detection | Developed by Research Team</p>
+        </div>
+    </footer>
+
+    <!-- Scripts - Load in correct dependency order -->
+    <script src="../js/error-handler.js"></script>
+    <script src="../js/security.js"></script>
+    <script src="../js/keyboard-navigation.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
