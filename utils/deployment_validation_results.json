@@ -1,0 +1,70 @@
+{
+  "timestamp": "2025-08-24T17:53:58.143628",
+  "total_tests": 10,
+  "passed_tests": 9,
+  "success_rate": 90.0,
+  "target_rate": 90.0,
+  "meets_target": true,
+  "test_details": [
+    {
+      "test": "Deployment Files Check",
+      "success": true,
+      "details": "All required deployment files present",
+      "timestamp": "2025-08-24T17:53:58.110770"
+    },
+    {
+      "test": "Requirements Validation",
+      "success": true,
+      "details": "All essential packages present in requirements.txt",
+      "timestamp": "2025-08-24T17:53:58.110935"
+    },
+    {
+      "test": "Procfile Format Check",
+      "success": true,
+      "details": "Valid Procfile: web: gunicorn app:app",
+      "timestamp": "2025-08-24T17:53:58.111040"
+    },
+    {
+      "test": "App Cloud Compatibility",
+      "success": true,
+      "details": "App configured for cloud deployment with dynamic port binding",
+      "timestamp": "2025-08-24T17:53:58.111327"
+    },
+    {
+      "test": "Model Weights Check",
+      "success": true,
+      "details": "Model file exists and has size: 378189 bytes",
+      "timestamp": "2025-08-24T17:53:58.111369"
+    },
+    {
+      "test": "Server Startup Test",
+      "success": true,
+      "details": "Server started successfully and health check passed",
+      "timestamp": "2025-08-24T17:53:58.119858"
+    },
+    {
+      "test": "API Endpoints Basic Test",
+      "success": false,
+      "details": "Low endpoint accessibility: 0.0% (0/2)",
+      "timestamp": "2025-08-24T17:53:58.137443"
+    },
+    {
+      "test": "Environment Variables Test",
+      "success": true,
+      "details": "App can handle PORT environment variable",
+      "timestamp": "2025-08-24T17:53:58.137624"
+    },
+    {
+      "test": "Data Directory Structure",
+      "success": true,
+      "details": "Data directory exists with 1 files",
+      "timestamp": "2025-08-24T17:53:58.137787"
+    },
+    {
+      "test": "Deployment Size Check",
+      "success": true,
+      "details": "Total deployment size: 9.7MB (within free tier limits)",
+      "timestamp": "2025-08-24T17:53:58.143416"
+    }
+  ]
+}

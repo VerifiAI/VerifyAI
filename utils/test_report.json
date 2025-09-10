@@ -1,0 +1,74 @@
+{
+  "timestamp": "2025-08-24T18:33:14.900598",
+  "summary": {
+    "total_tests": 9,
+    "passed_tests": 9,
+    "failed_tests": 0,
+    "success_rate": 100.0
+  },
+  "test_results": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "message": "API is healthy",
+      "timestamp": "2025-08-24T18:33:12.713438",
+      "response_time": 0.014267921447753906
+    },
+    {
+      "test": "Text Detection",
+      "success": true,
+      "message": "Prediction: fake (confidence: 0.5001)",
+      "timestamp": "2025-08-24T18:33:12.719496",
+      "response_time": 0.0059621334075927734
+    },
+    {
+      "test": "URL Detection",
+      "success": true,
+      "message": "Prediction: fake (confidence: 0.5152)",
+      "timestamp": "2025-08-24T18:33:12.722752",
+      "response_time": 0.0031790733337402344
+    },
+    {
+      "test": "Live Feed (BBC)",
+      "success": true,
+      "message": "Retrieved 5 articles",
+      "timestamp": "2025-08-24T18:33:13.376508",
+      "response_time": 0.6536688804626465
+    },
+    {
+      "test": "Live Feed (CNN)",
+      "success": true,
+      "message": "Retrieved 5 articles",
+      "timestamp": "2025-08-24T18:33:14.263769",
+      "response_time": 0.8871889114379883
+    },
+    {
+      "test": "Live Feed (FOX)",
+      "success": true,
+      "message": "Retrieved 5 articles",
+      "timestamp": "2025-08-24T18:33:14.881873",
+      "response_time": 0.6180510520935059
+    },
+    {
+      "test": "Live Feed (REUTERS)",
+      "success": true,
+      "message": "Retrieved 0 articles",
+      "timestamp": "2025-08-24T18:33:14.895786",
+      "response_time": 0.013869047164916992
+    },
+    {
+      "test": "History Retrieval",
+      "success": true,
+      "message": "Retrieved 5 history records",
+      "timestamp": "2025-08-24T18:33:14.898190",
+      "response_time": 0.002331972122192383
+    },
+    {
+      "test": "Authentication",
+      "success": true,
+      "message": "Authentication successful",
+      "timestamp": "2025-08-24T18:33:14.900519",
+      "response_time": 0.0022649765014648438
+    }
+  ]
+}

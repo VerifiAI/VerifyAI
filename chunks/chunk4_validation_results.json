@@ -1,0 +1,103 @@
+{
+  "test_suite": "Chunk 4 Validation",
+  "timestamp": "2025-08-24T16:43:13.222214",
+  "total_tests": 13,
+  "passed_tests": 12,
+  "failed_tests": 1,
+  "accuracy_percentage": 92.3,
+  "validation_successful": true,
+  "target_url": "http://localhost:5001",
+  "detailed_results": [
+    {
+      "test_name": "Server Availability",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200",
+      "timestamp": "2025-08-24T16:43:08.985498"
+    },
+    {
+      "test_name": "Live Feed - BBC",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Count: 5",
+      "timestamp": "2025-08-24T16:43:09.448563"
+    },
+    {
+      "test_name": "Live Feed - CNN",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Count: 5",
+      "timestamp": "2025-08-24T16:43:10.373883"
+    },
+    {
+      "test_name": "Live Feed - FOX",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Count: 5",
+      "timestamp": "2025-08-24T16:43:11.024050"
+    },
+    {
+      "test_name": "Live Feed - Reuters",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Count: 0",
+      "timestamp": "2025-08-24T16:43:11.037622"
+    },
+    {
+      "test_name": "Live Feed - Invalid Source",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 400, Message: Invalid or missing source parameter. Supported: bbc, cnn, fox, reuters",
+      "timestamp": "2025-08-24T16:43:11.039763"
+    },
+    {
+      "test_name": "Live Feed Data Structure",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Required fields present: True",
+      "timestamp": "2025-08-24T16:43:11.621032"
+    },
+    {
+      "test_name": "Detect Endpoint",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Result: real, Confidence: 0.4397",
+      "timestamp": "2025-08-24T16:43:11.627819"
+    },
+    {
+      "test_name": "History Endpoint",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Status: 200, Count: 3, Persistence: False",
+      "timestamp": "2025-08-24T16:43:12.641480"
+    },
+    {
+      "test_name": "Data Persistence Verification",
+      "status": "\u274c FAIL",
+      "passed": false,
+      "details": "Expected timestamp: 2025-08-24T16:43:11.626854",
+      "timestamp": "2025-08-24T16:43:12.641538"
+    },
+    {
+      "test_name": "Performance - /api/health",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Response time: 0.00s",
+      "timestamp": "2025-08-24T16:43:12.646512"
+    },
+    {
+      "test_name": "Performance - /api/live-feed?source=bbc",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Response time: 0.57s",
+      "timestamp": "2025-08-24T16:43:13.218363"
+    },
+    {
+      "test_name": "Performance - /api/history",
+      "status": "\u2705 PASS",
+      "passed": true,
+      "details": "Response time: 0.00s",
+      "timestamp": "2025-08-24T16:43:13.222089"
+    }
+  ]
+}

@@ -1,0 +1,394 @@
+{
+  "diagnostic_timestamp": "2025-08-27T15:21:09.825397",
+  "total_diagnostic_time": 281.42778992652893,
+  "test_results": {
+    "Model Consistency": {
+      "test_type": "consistency",
+      "input": "This is a test message for consistency checking.",
+      "runs": 5,
+      "verdict_consistency": true,
+      "unique_verdicts": [
+        "REAL"
+      ],
+      "confidence_variance": 0.0,
+      "confidence_range": [
+        0.575,
+        0.575
+      ],
+      "results": [
+        {
+          "run": 1,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "processing_time": 1756288003.583791
+        },
+        {
+          "run": 2,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "processing_time": 1756288019.615933
+        },
+        {
+          "run": 3,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "processing_time": 1756288035.641262
+        },
+        {
+          "run": 4,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "processing_time": 1756288051.65838
+        },
+        {
+          "run": 5,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "processing_time": 1756288067.674699
+        }
+      ],
+      "status": "success"
+    },
+    "Confidence Variation": {
+      "test_type": "confidence_variation",
+      "total_cases": 5,
+      "successful_cases": 5,
+      "confidence_variance": 8.390559999999942e-05,
+      "confidence_range": 0.02289999999999992,
+      "unique_confidence_scores": 2,
+      "all_confidences": [
+        0.5521,
+        0.575,
+        0.575,
+        0.575,
+        0.575
+      ],
+      "results": [
+        {
+          "case": 1,
+          "text": "The sky is blue and water is wet....",
+          "verdict": "REAL",
+          "confidence": 0.5521,
+          "expected_confidence": "high"
+        },
+        {
+          "case": 2,
+          "text": "BREAKING: Aliens invade Earth, government covers i...",
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "expected_confidence": "high"
+        },
+        {
+          "case": 3,
+          "text": "Scientists may have discovered something interesti...",
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "expected_confidence": "medium"
+        },
+        {
+          "case": 4,
+          "text": "Some people think that maybe things could be diffe...",
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "expected_confidence": "low"
+        },
+        {
+          "case": 5,
+          "text": "URGENT SHOCKING BREAKING NEWS CLICK HERE NOW!!!...",
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "expected_confidence": "high"
+        }
+      ],
+      "status": "static"
+    },
+    "Extreme Cases": {
+      "test_type": "extreme_cases",
+      "total_cases": 8,
+      "successful_cases": 5,
+      "failed_cases": 3,
+      "results": [
+        {
+          "case": 1,
+          "description": "Empty string",
+          "text_length": 0,
+          "error": "HTTP 400",
+          "status": "failed"
+        },
+        {
+          "case": 2,
+          "description": "Single character",
+          "text_length": 1,
+          "error": "HTTP 400",
+          "status": "failed"
+        },
+        {
+          "case": 3,
+          "description": "Very long repetitive text",
+          "text_length": 4000,
+          "verdict": "FAKE",
+          "confidence": 0.4898,
+          "evidence_count": 1,
+          "status": "success"
+        },
+        {
+          "case": 4,
+          "description": "Special characters only",
+          "text_length": 22,
+          "verdict": "REAL",
+          "confidence": 0.04,
+          "evidence_count": 2,
+          "status": "success"
+        },
+        {
+          "case": 5,
+          "description": "Numbers only",
+          "text_length": 9,
+          "error": "HTTP 400",
+          "status": "failed"
+        },
+        {
+          "case": 6,
+          "description": "Repeated characters",
+          "text_length": 20,
+          "verdict": "REAL",
+          "confidence": 0.04,
+          "evidence_count": 2,
+          "status": "success"
+        },
+        {
+          "case": 7,
+          "description": "Well-formed sentence",
+          "text_length": 60,
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "evidence_count": 3,
+          "status": "success"
+        },
+        {
+          "case": 8,
+          "description": "Mixed capitalization",
+          "text_length": 28,
+          "verdict": "REAL",
+          "confidence": 0.5521,
+          "evidence_count": 3,
+          "status": "success"
+        }
+      ],
+      "status": "completed"
+    },
+    "Input Types": {
+      "test_type": "input_types",
+      "total_cases": 6,
+      "successful_cases": 2,
+      "failed_cases": 4,
+      "exception_cases": 0,
+      "results": [
+        {
+          "case": 1,
+          "type": "text",
+          "description": "Simple text input",
+          "status_code": 200,
+          "input_keys": [
+            "text"
+          ],
+          "verdict": "REAL",
+          "confidence": 0.575,
+          "evidence_count": 3,
+          "status": "success"
+        },
+        {
+          "case": 2,
+          "type": "url",
+          "description": "URL input",
+          "status_code": 200,
+          "input_keys": [
+            "url"
+          ],
+          "verdict": "REAL",
+          "confidence": 0.04,
+          "evidence_count": 0,
+          "status": "success"
+        },
+        {
+          "case": 3,
+          "type": "image",
+          "description": "Image path input",
+          "status_code": 400,
+          "input_keys": [
+            "image_path"
+          ],
+          "error_message": "No valid input provided. Please provide text, image, or URL.",
+          "status": "failed"
+        },
+        {
+          "case": 4,
+          "type": "image_base64",
+          "description": "Base64 image input",
+          "status_code": 400,
+          "input_keys": [
+            "image"
+          ],
+          "error_message": "No valid input provided. Please provide text, image, or URL.",
+          "status": "failed"
+        },
+        {
+          "case": 5,
+          "type": "multiple",
+          "description": "Multiple input types",
+          "status_code": 400,
+          "input_keys": [
+            "text",
+            "url"
+          ],
+          "error_message": "Text must be at least 10 characters long",
+          "status": "failed"
+        },
+        {
+          "case": 6,
+          "type": "invalid",
+          "description": "Invalid input field",
+          "status_code": 400,
+          "input_keys": [
+            "invalid_field"
+          ],
+          "error_message": "No valid input provided. Please provide text, image, or URL.",
+          "status": "failed"
+        }
+      ],
+      "supported_input_types": [
+        "text",
+        "url"
+      ],
+      "status": "completed"
+    },
+    "API Endpoints": {
+      "test_type": "api_endpoints",
+      "total_endpoints": 6,
+      "successful_endpoints": 4,
+      "failed_endpoints": 2,
+      "exception_endpoints": 0,
+      "results": [
+        {
+          "endpoint": "/api/health",
+          "method": "GET",
+          "description": "Health check",
+          "status_code": 200,
+          "response_time": 0.006188,
+          "status": "success",
+          "response_type": "json",
+          "response_keys": [
+            "database_connected",
+            "message",
+            "model_loaded",
+            "status",
+            "timestamp"
+          ]
+        },
+        {
+          "endpoint": "/api/detect",
+          "method": "POST",
+          "description": "Main detection endpoint",
+          "status_code": 400,
+          "response_time": 0.003951,
+          "status": "failed",
+          "response_type": "json",
+          "response_keys": [
+            "message",
+            "status"
+          ]
+        },
+        {
+          "endpoint": "/api/history",
+          "method": "GET",
+          "description": "Detection history",
+          "status_code": 200,
+          "response_time": 0.007421,
+          "status": "success",
+          "response_type": "json",
+          "response_keys": [
+            "count",
+            "data",
+            "message",
+            "status"
+          ]
+        },
+        {
+          "endpoint": "/api/live-feed",
+          "method": "GET",
+          "description": "Live news feed",
+          "status_code": 200,
+          "response_time": 1.888066,
+          "status": "success",
+          "response_type": "json",
+          "response_keys": [
+            "api_source",
+            "cache_hit",
+            "cached",
+            "category",
+            "count",
+            "country",
+            "data",
+            "message",
+            "performance",
+            "response_time",
+            "source",
+            "status",
+            "validation_enabled"
+          ]
+        },
+        {
+          "endpoint": "/api/stats",
+          "method": "GET",
+          "description": "System statistics",
+          "status_code": 404,
+          "response_time": 0.002937,
+          "status": "failed",
+          "response_type": "json",
+          "response_keys": [
+            "code",
+            "message",
+            "status"
+          ]
+        },
+        {
+          "endpoint": "/",
+          "method": "GET",
+          "description": "Frontend interface",
+          "status_code": 200,
+          "response_time": 0.002634,
+          "status": "success",
+          "response_type": "text",
+          "response_length": 16043
+        }
+      ],
+      "available_endpoints": [
+        "/api/health",
+        "/api/history",
+        "/api/live-feed",
+        "/"
+      ],
+      "status": "completed"
+    }
+  },
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "critical_issues": [
+      "Model produces static confidence scores - no variation"
+    ],
+    "warnings": [
+      "Image input not supported"
+    ],
+    "system_health": "poor"
+  },
+  "recommendations": [
+    "CRITICAL: Fix confidence calculation - model returns identical scores",
+    "HIGH: Implement proper multimodal input handling",
+    "MEDIUM: Fix failed API endpoints for complete functionality",
+    "Implement proper model validation and testing pipeline",
+    "Add comprehensive error handling and logging",
+    "Establish performance monitoring and alerting",
+    "Create automated regression testing suite"
+  ]
+}

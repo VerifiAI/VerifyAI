@@ -1,0 +1,595 @@
+{
+  "timestamp": 1756292536.9128819,
+  "overall_score": 94.11764705882352,
+  "passed": true,
+  "consistency_tests": [
+    {
+      "test_name": "consistency_fake_news_0",
+      "passed": true,
+      "details": {
+        "text": "Breaking: Scientists discover that vaccines contai",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292071.845048
+    },
+    {
+      "test_name": "consistency_fake_news_1",
+      "passed": true,
+      "details": {
+        "text": "URGENT: 5G towers are spreading coronavirus throug",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292119.8532622
+    },
+    {
+      "test_name": "consistency_real_news_2",
+      "passed": true,
+      "details": {
+        "text": "The Federal Reserve announced a 0.25% interest rat",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292167.8614368
+    },
+    {
+      "test_name": "consistency_real_news_3",
+      "passed": true,
+      "details": {
+        "text": "NASA's James Webb Space Telescope captures detaile",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292215.8724322
+    },
+    {
+      "test_name": "consistency_ambiguous_4",
+      "passed": true,
+      "details": {
+        "text": "Weather forecast predicts rain tomorrow",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292263.880085
+    },
+    {
+      "test_name": "consistency_ambiguous_5",
+      "passed": true,
+      "details": {
+        "text": "Stock market shows mixed signals",
+        "verdicts": [
+          "REAL",
+          "REAL",
+          "REAL"
+        ],
+        "confidences": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "verdict_consistent": true,
+        "confidence_std": 0.0
+      },
+      "timestamp": 1756292311.888308
+    }
+  ],
+  "confidence_tests": [
+    {
+      "test_name": "confidence_calibration",
+      "passed": false,
+      "details": {
+        "bounds_valid": true,
+        "distribution_valid": false,
+        "confidence_reasonable": false,
+        "avg_fake_confidence": 0.5,
+        "avg_real_confidence": 0.5,
+        "confidence_variance": 0.0
+      },
+      "timestamp": 1756292401.897374
+    }
+  ],
+  "timing_tests": [
+    {
+      "test_name": "timing_fake_news",
+      "passed": true,
+      "details": {
+        "processing_time": 15.001644611358643,
+        "text": "Breaking: Scientists discover ",
+        "within_bounds": true
+      },
+      "timestamp": 1756292416.899175
+    },
+    {
+      "test_name": "timing_real_news",
+      "passed": true,
+      "details": {
+        "processing_time": 15.001286029815674,
+        "text": "The Federal Reserve announced ",
+        "within_bounds": true
+      },
+      "timestamp": 1756292431.900555
+    },
+    {
+      "test_name": "timing_ambiguous",
+      "passed": true,
+      "details": {
+        "processing_time": 15.001315116882324,
+        "text": "Weather forecast predicts rain",
+        "within_bounds": true
+      },
+      "timestamp": 1756292446.901889
+    },
+    {
+      "test_name": "average_timing",
+      "passed": true,
+      "details": {
+        "average_time": 15.001415252685547,
+        "all_times": [
+          15.001644611358643,
+          15.001286029815674,
+          15.001315116882324
+        ]
+      },
+      "timestamp": 1756292446.901995
+    }
+  ],
+  "integration_tests": [
+    {
+      "test_name": "pipeline_integration",
+      "passed": true,
+      "details": {
+        "has_required_fields": true,
+        "has_orchestrator_fields": true,
+        "correct_types": true,
+        "result_keys": [
+          "status",
+          "verdict",
+          "confidence",
+          "model_p_fake",
+          "posterior_p_fake",
+          "processing_time_s",
+          "evidence",
+          "fusion_details",
+          "processing_details",
+          "evidence_summary",
+          "details"
+        ]
+      },
+      "timestamp": 1756292461.903753
+    }
+  ],
+  "reliability_tests": [
+    {
+      "test_name": "edge_case_0",
+      "passed": true,
+      "details": {
+        "input": "''",
+        "has_verdict": true,
+        "has_confidence": true,
+        "result": {
+          "status": "error",
+          "verdict": "REAL",
+          "confidence": 0.1,
+          "error_message": "At least one input (text, image_url, or url) must be provided",
+          "processing_time_s": 15.0
+        }
+      },
+      "timestamp": 1756292476.905261
+    },
+    {
+      "test_name": "edge_case_1",
+      "passed": true,
+      "details": {
+        "input": "'a'",
+        "has_verdict": true,
+        "has_confidence": true,
+        "result": {
+          "status": "ok",
+          "verdict": "FAKE",
+          "confidence": 0.050000000000000044,
+          "model_p_fake": 0.5,
+          "posterior_p_fake": 0.525,
+          "processing_time_s": 15.0,
+          "evidence": [],
+          "fusion_details": {
+            "prior_fake": 0.5,
+            "likelihood_ratios": [],
+            "tiebreak_applied": true
+          },
+          "processing_details": {
+            "text": {
+              "encoding_method": "skipped",
+              "text_length": 1,
+              "word_count": 1,
+              "processing_time": 3.814697265625e-06,
+              "fallback_reason": "Text too short or empty"
+            }
+          },
+          "evidence_summary": {
+            "total_count": 0,
+            "sources": [],
+            "avg_credibility": 0.0
+          },
+          "details": {
+            "request_id": "req_76905",
+            "mhfn_details": {
+              "text": {
+                "encoding_method": "skipped",
+                "text_length": 1,
+                "word_count": 1,
+                "processing_time": 3.814697265625e-06,
+                "fallback_reason": "Text too short or empty"
+              }
+            },
+            "fusion_details": {
+              "prior_fake": 0.5,
+              "likelihood_ratios": [],
+              "tiebreak_applied": true
+            },
+            "evidence_count": 0,
+            "modalities_used": [],
+            "sla_compliant": true
+          }
+        }
+      },
+      "timestamp": 1756292491.906524
+    },
+    {
+      "test_name": "edge_case_2",
+      "passed": true,
+      "details": {
+        "input": "'The quick brown fox jumps over the lazy dogThe qui'",
+        "has_verdict": true,
+        "has_confidence": true,
+        "result": {
+          "status": "ok",
+          "verdict": "REAL",
+          "confidence": 0.5,
+          "model_p_fake": 0.5,
+          "posterior_p_fake": 0.475,
+          "processing_time_s": 15.0,
+          "evidence": [
+            {
+              "source": "ap_news",
+              "stance": "real",
+              "similarity": 0.6,
+              "credibility": 0.97,
+              "recency_days": 591,
+              "likelihood_ratio": 0.534,
+              "url": "https://apnews.com/article/b8d22aeb",
+              "title": "AP News: quick brown jumps..."
+            },
+            {
+              "source": "snopes",
+              "stance": "real",
+              "similarity": 0.6,
+              "credibility": 0.95,
+              "recency_days": 590,
+              "likelihood_ratio": 0.545,
+              "url": "https://www.snopes.com/fact-check/b8d22aeb",
+              "title": "Fact Check: quick brown jumps..."
+            },
+            {
+              "source": "politifact",
+              "stance": "fake",
+              "similarity": 0.6,
+              "credibility": 0.9,
+              "recency_days": 595,
+              "likelihood_ratio": 3.301,
+              "url": "https://www.politifact.com/factchecks/b8d22aeb",
+              "title": "PolitiFact Check: quick brown jumps..."
+            }
+          ],
+          "fusion_details": {
+            "prior_fake": 0.5,
+            "likelihood_ratios": [
+              0.534,
+              0.545,
+              3.301
+            ],
+            "tiebreak_applied": false,
+            "evidence_count": 3,
+            "fusion_method": "Enhanced_EGBF_v2",
+            "numerical_stability": true,
+            "deterministic_tie_breaking": true
+          },
+          "processing_details": {
+            "text": {
+              "encoding_method": "SentenceTransformer",
+              "text_length": 4300,
+              "word_count": 801,
+              "processing_time": 0.20514416694641113,
+              "fallback_reason": null,
+              "dimension_reduced": true,
+              "embedding_dim": 300
+            },
+            "text_length": 4300,
+            "text_words": 801
+          },
+          "evidence_summary": {
+            "total_count": 3,
+            "sources": [
+              "politifact",
+              "ap_news",
+              "snopes"
+            ],
+            "avg_credibility": 0.94
+          },
+          "details": {
+            "request_id": "req_91906",
+            "mhfn_details": {
+              "text": {
+                "encoding_method": "SentenceTransformer",
+                "text_length": 4300,
+                "word_count": 801,
+                "processing_time": 0.20514416694641113,
+                "fallback_reason": null,
+                "dimension_reduced": true,
+                "embedding_dim": 300
+              },
+              "text_length": 4300,
+              "text_words": 801
+            },
+            "fusion_details": {
+              "prior_fake": 0.5,
+              "likelihood_ratios": [
+                0.534,
+                0.545,
+                3.301
+              ],
+              "tiebreak_applied": false,
+              "evidence_count": 3,
+              "fusion_method": "Enhanced_EGBF_v2",
+              "numerical_stability": true,
+              "deterministic_tie_breaking": true
+            },
+            "evidence_count": 3,
+            "modalities_used": [
+              "text"
+            ],
+            "sla_compliant": true
+          }
+        }
+      },
+      "timestamp": 1756292506.908028
+    },
+    {
+      "test_name": "edge_case_3",
+      "passed": true,
+      "details": {
+        "input": "'\ud83d\ude80\ud83c\udf1f\ud83d\udcab\u2728\ud83c\udfaf\ud83d\udd25\ud83d\udcaf\u26a1\ud83c\udf08\ud83c\udf89'",
+        "has_verdict": true,
+        "has_confidence": true,
+        "result": {
+          "status": "ok",
+          "verdict": "REAL",
+          "confidence": 0.5,
+          "model_p_fake": 0.5,
+          "posterior_p_fake": 0.3581,
+          "processing_time_s": 15.0,
+          "evidence": [
+            {
+              "source": "ap_news",
+              "stance": "real",
+              "similarity": 0.75,
+              "credibility": 0.97,
+              "recency_days": 591,
+              "likelihood_ratio": 0.404,
+              "url": "https://apnews.com/article/1148379a",
+              "title": "AP News: news information fact..."
+            },
+            {
+              "source": "snopes",
+              "stance": "real",
+              "similarity": 0.75,
+              "credibility": 0.95,
+              "recency_days": 590,
+              "likelihood_ratio": 0.418,
+              "url": "https://www.snopes.com/fact-check/1148379a",
+              "title": "Fact Check: news information fact..."
+            },
+            {
+              "source": "politifact",
+              "stance": "fake",
+              "similarity": 0.6,
+              "credibility": 0.9,
+              "recency_days": 595,
+              "likelihood_ratio": 3.301,
+              "url": "https://www.politifact.com/factchecks/1148379a",
+              "title": "PolitiFact Check: news information fact..."
+            }
+          ],
+          "fusion_details": {
+            "prior_fake": 0.5,
+            "likelihood_ratios": [
+              0.404,
+              0.418,
+              3.301
+            ],
+            "tiebreak_applied": "False",
+            "evidence_count": 3,
+            "fusion_method": "Enhanced_EGBF_v2",
+            "numerical_stability": true,
+            "deterministic_tie_breaking": true
+          },
+          "processing_details": {
+            "text": {
+              "encoding_method": "SentenceTransformer",
+              "text_length": 10,
+              "word_count": 1,
+              "processing_time": 0.1254408359527588,
+              "fallback_reason": null,
+              "dimension_reduced": true,
+              "embedding_dim": 300
+            },
+            "text_length": 10,
+            "text_words": 1
+          },
+          "evidence_summary": {
+            "total_count": 3,
+            "sources": [
+              "politifact",
+              "ap_news",
+              "snopes"
+            ],
+            "avg_credibility": 0.94
+          },
+          "details": {
+            "request_id": "req_6910",
+            "mhfn_details": {
+              "text": {
+                "encoding_method": "SentenceTransformer",
+                "text_length": 10,
+                "word_count": 1,
+                "processing_time": 0.1254408359527588,
+                "fallback_reason": null,
+                "dimension_reduced": true,
+                "embedding_dim": 300
+              },
+              "text_length": 10,
+              "text_words": 1
+            },
+            "fusion_details": {
+              "prior_fake": 0.5,
+              "likelihood_ratios": [
+                0.404,
+                0.418,
+                3.301
+              ],
+              "tiebreak_applied": "False",
+              "evidence_count": 3,
+              "fusion_method": "Enhanced_EGBF_v2",
+              "numerical_stability": true,
+              "deterministic_tie_breaking": true
+            },
+            "evidence_count": 3,
+            "modalities_used": [
+              "text"
+            ],
+            "sla_compliant": true
+          }
+        }
+      },
+      "timestamp": 1756292521.911509
+    },
+    {
+      "test_name": "edge_case_4",
+      "passed": true,
+      "details": {
+        "input": "'123456789'",
+        "has_verdict": true,
+        "has_confidence": true,
+        "result": {
+          "status": "ok",
+          "verdict": "FAKE",
+          "confidence": 0.050000000000000044,
+          "model_p_fake": 0.5,
+          "posterior_p_fake": 0.525,
+          "processing_time_s": 15.0,
+          "evidence": [],
+          "fusion_details": {
+            "prior_fake": 0.5,
+            "likelihood_ratios": [],
+            "tiebreak_applied": true
+          },
+          "processing_details": {
+            "text": {
+              "encoding_method": "SentenceTransformer",
+              "text_length": 9,
+              "word_count": 1,
+              "processing_time": 0.04929304122924805,
+              "fallback_reason": null,
+              "dimension_reduced": true,
+              "embedding_dim": 300
+            },
+            "text_length": 9,
+            "text_words": 1
+          },
+          "evidence_summary": {
+            "total_count": 0,
+            "sources": [],
+            "avg_credibility": 0.0
+          },
+          "details": {
+            "request_id": "req_21911",
+            "mhfn_details": {
+              "text": {
+                "encoding_method": "SentenceTransformer",
+                "text_length": 9,
+                "word_count": 1,
+                "processing_time": 0.04929304122924805,
+                "fallback_reason": null,
+                "dimension_reduced": true,
+                "embedding_dim": 300
+              },
+              "text_length": 9,
+              "text_words": 1
+            },
+            "fusion_details": {
+              "prior_fake": 0.5,
+              "likelihood_ratios": [],
+              "tiebreak_applied": true
+            },
+            "evidence_count": 0,
+            "modalities_used": [
+              "text"
+            ],
+            "sla_compliant": true
+          }
+        }
+      },
+      "timestamp": 1756292536.912703
+    }
+  ]
+}

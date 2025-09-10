@@ -1,0 +1,6 @@
+# Sample data file for deployment
+# This ensures the data directory is not empty during deployment
+# Real data files should be added here for production use
+
+Sample news text for testing fake news detection model.
+This is a placeholder file to ensure the data directory structure is maintained during deployment.

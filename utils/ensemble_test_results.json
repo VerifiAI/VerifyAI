@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-08-26 21:31:05",
+  "tests_run": 9,
+  "tests_passed": 9,
+  "tests_failed": 0,
+  "test_details": [
+    {
+      "test_name": "test_ensemble_pipeline_creation",
+      "status": "PASSED",
+      "execution_time": 0.012,
+      "error": null
+    },
+    {
+      "test_name": "test_pipeline_training",
+      "status": "PASSED",
+      "execution_time": 53.04,
+      "error": null
+    },
+    {
+      "test_name": "test_ensemble_predictions",
+      "status": "PASSED",
+      "execution_time": 41.76,
+      "error": null
+    },
+    {
+      "test_name": "test_model_performance",
+      "status": "PASSED",
+      "execution_time": 26.432,
+      "error": null
+    },
+    {
+      "test_name": "test_hyperparameter_optimization",
+      "status": "PASSED",
+      "execution_time": 7.337,
+      "error": null
+    },
+    {
+      "test_name": "test_cross_validation",
+      "status": "PASSED",
+      "execution_time": 0.764,
+      "error": null
+    },
+    {
+      "test_name": "test_feature_importance",
+      "status": "PASSED",
+      "execution_time": 29.899,
+      "error": null
+    },
+    {
+      "test_name": "test_performance_monitoring",
+      "status": "PASSED",
+      "execution_time": 28.106,
+      "error": null
+    },
+    {
+      "test_name": "test_error_handling",
+      "status": "PASSED",
+      "execution_time": 31.996,
+      "error": null
+    }
+  ],
+  "overall_status": "ALL_PASSED",
+  "success_rate": 100.0
+}

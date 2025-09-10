@@ -1,0 +1,106 @@
+{
+  "timestamp": "2025-08-24T16:51:48.137397",
+  "chunk": "Chunk 5 - Frontend Dashboard",
+  "tests": [
+    {
+      "test_name": "File Existence - index.html",
+      "status": "PASS",
+      "details": "File exists with size 4509 bytes",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.137509"
+    },
+    {
+      "test_name": "File Existence - styles.css",
+      "status": "PASS",
+      "details": "File exists with size 8376 bytes",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.137544"
+    },
+    {
+      "test_name": "File Existence - script.js",
+      "status": "PASS",
+      "details": "File exists with size 10761 bytes",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.137574"
+    },
+    {
+      "test_name": "HTML Structure Validation",
+      "status": "FAIL",
+      "details": "Missing 7 elements",
+      "error": "Missing: <div class=\"sidebar\">, <div class=\"main-content\">, <textarea id=\"newsText\">, <button id=\"detectBtn\">, <div id=\"detectionResult\">, <div id=\"liveFeed\">, <div id=\"historyList\">",
+      "timestamp": "2025-08-24T16:51:48.137836"
+    },
+    {
+      "test_name": "CSS Styling Validation",
+      "status": "PASS",
+      "details": "All 11 required CSS rules found",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.138035"
+    },
+    {
+      "test_name": "JavaScript Structure Validation",
+      "status": "PASS",
+      "details": "All 10 required JS features found",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.138123"
+    },
+    {
+      "test_name": "Frontend Server Response",
+      "status": "PASS",
+      "details": "HTML served successfully (status: 200)",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.156625"
+    },
+    {
+      "test_name": "Static File Serving - /styles.css",
+      "status": "PASS",
+      "details": "File served successfully (status: 200)",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.159503"
+    },
+    {
+      "test_name": "Static File Serving - /script.js",
+      "status": "PASS",
+      "details": "File served successfully (status: 200)",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:48.162267"
+    },
+    {
+      "test_name": "API Integration - /api/live-feed?source=bbc",
+      "status": "PASS",
+      "details": "API responded successfully with valid JSON",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:49.097739"
+    },
+    {
+      "test_name": "API Integration - /api/history",
+      "status": "PASS",
+      "details": "API responded successfully with valid JSON",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:49.099938"
+    },
+    {
+      "test_name": "API Integration - /api/detect",
+      "status": "PASS",
+      "details": "API responded successfully with valid JSON",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:49.107245"
+    },
+    {
+      "test_name": "Responsive Design Implementation",
+      "status": "PASS",
+      "details": "Found 5/5 responsive features",
+      "error": "",
+      "timestamp": "2025-08-24T16:51:49.107391"
+    }
+  ],
+  "summary": {
+    "total_tests": 13,
+    "passed_tests": 12,
+    "failed_tests": 1,
+    "accuracy_percentage": 92.31,
+    "target_accuracy": 90.0,
+    "meets_target": true,
+    "completion_time": "2025-08-24T16:51:49.107409"
+  }
+}

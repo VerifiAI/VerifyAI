@@ -1,0 +1,102 @@
+{
+  "timestamp": "2025-08-24T17:26:33.323446",
+  "total_duration": 0.287271,
+  "total_tests": 15,
+  "passed_tests": 15,
+  "failed_tests": 0,
+  "success_rate": 100.0,
+  "target_success_rate": 90.0,
+  "meets_requirement": true,
+  "test_details": [
+    {
+      "test_name": "test_01_data_loader_initialization",
+      "success": true,
+      "duration": 0.00043,
+      "timestamp": "2025-08-24T17:26:33.036685"
+    },
+    {
+      "test_name": "test_02_parquet_file_loading",
+      "success": true,
+      "duration": 0.036104,
+      "timestamp": "2025-08-24T17:26:33.072880"
+    },
+    {
+      "test_name": "test_03_pickle_file_loading",
+      "success": true,
+      "duration": 0.003062,
+      "timestamp": "2025-08-24T17:26:33.076076"
+    },
+    {
+      "test_name": "test_04_missing_value_handling",
+      "success": true,
+      "duration": 0.004141,
+      "timestamp": "2025-08-24T17:26:33.080295"
+    },
+    {
+      "test_name": "test_05_feature_label_extraction",
+      "success": true,
+      "duration": 0.013111,
+      "timestamp": "2025-08-24T17:26:33.093497"
+    },
+    {
+      "test_name": "test_06_tensor_dimension_validation",
+      "success": true,
+      "duration": 0.014189,
+      "timestamp": "2025-08-24T17:26:33.107777"
+    },
+    {
+      "test_name": "test_07_data_preprocessing_pipeline",
+      "success": true,
+      "duration": 0.02386,
+      "timestamp": "2025-08-24T17:26:33.131729"
+    },
+    {
+      "test_name": "test_08_small_batch_testing",
+      "success": true,
+      "duration": 0.008428,
+      "timestamp": "2025-08-24T17:26:33.140312"
+    },
+    {
+      "test_name": "test_09_pytorch_dataloader_creation",
+      "success": true,
+      "duration": 0.030366,
+      "timestamp": "2025-08-24T17:26:33.170761"
+    },
+    {
+      "test_name": "test_10_dataset_class_functionality",
+      "success": true,
+      "duration": 0.001653,
+      "timestamp": "2025-08-24T17:26:33.172502"
+    },
+    {
+      "test_name": "test_11_data_statistics_generation",
+      "success": true,
+      "duration": 0.00386,
+      "timestamp": "2025-08-24T17:26:33.176428"
+    },
+    {
+      "test_name": "test_12_error_handling_robustness",
+      "success": true,
+      "duration": 0.002445,
+      "timestamp": "2025-08-24T17:26:33.178952"
+    },
+    {
+      "test_name": "test_13_memory_efficiency",
+      "success": true,
+      "duration": 0.077814,
+      "timestamp": "2025-08-24T17:26:33.256835"
+    },
+    {
+      "test_name": "test_14_integration_with_mhfn_requirements",
+      "success": true,
+      "duration": 0.014796,
+      "timestamp": "2025-08-24T17:26:33.271718"
+    },
+    {
+      "test_name": "test_15_performance_benchmarking",
+      "success": true,
+      "duration": 0.051565,
+      "timestamp": "2025-08-24T17:26:33.323370"
+    }
+  ]
+}

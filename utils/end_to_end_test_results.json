@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "total_tests": 8,
+    "passed": 8,
+    "failed": 0,
+    "errors": 0,
+    "success_rate": 100.0,
+    "test_timestamp": "2025-08-24T21:21:32.561975"
+  },
+  "detailed_results": [
+    {
+      "test_name": "Text Detection",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:21.438682",
+      "details": "Prediction: fake, Confidence: 0.630",
+      "error": null
+    },
+    {
+      "test_name": "Image Detection",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:28.235523",
+      "details": "Prediction: fake, Confidence: 0.669",
+      "error": null
+    },
+    {
+      "test_name": "Multimodal Detection",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:31.367960",
+      "details": "Prediction: fake, Consistency: N/A",
+      "error": null
+    },
+    {
+      "test_name": "Explainability",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:31.369975",
+      "details": "Explainability endpoint working (limited functionality mode)",
+      "error": null
+    },
+    {
+      "test_name": "Extended Metrics",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:31.385653",
+      "details": "ROC-AUC: 0.655, Fidelity: 0.000",
+      "error": null
+    },
+    {
+      "test_name": "Live Feed",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:32.248484",
+      "details": "Retrieved 5 news items",
+      "error": null
+    },
+    {
+      "test_name": "History",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:32.250768",
+      "details": "Retrieved 5 history items",
+      "error": null
+    },
+    {
+      "test_name": "Performance Benchmark",
+      "status": "PASS",
+      "timestamp": "2025-08-24T21:21:32.561757",
+      "details": "Success rate: 100.0%, Avg response: 0.06s",
+      "error": null
+    }
+  ]
+}

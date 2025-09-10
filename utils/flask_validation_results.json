@@ -1,0 +1,425 @@
+{
+  "summary": {
+    "total_tests": 69,
+    "passed_tests": 67,
+    "failed_tests": 2,
+    "accuracy": 97.10144927536231,
+    "timestamp": "2025-08-24T16:36:27.440423"
+  },
+  "detailed_results": [
+    {
+      "test_name": "Server - Accessibility",
+      "passed": true,
+      "details": "Server responding on http://localhost:5001",
+      "timestamp": "2025-08-24T16:36:27.403533"
+    },
+    {
+      "test_name": "Health endpoint - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.405929"
+    },
+    {
+      "test_name": "Health endpoint - Valid JSON response",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.405963"
+    },
+    {
+      "test_name": "Health endpoint - Has status field",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.405973"
+    },
+    {
+      "test_name": "Health endpoint - Has message field",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.405981"
+    },
+    {
+      "test_name": "Health endpoint - Has database_connected field",
+      "passed": true,
+      "details": "Missing database_connected",
+      "timestamp": "2025-08-24T16:36:27.405989"
+    },
+    {
+      "test_name": "Health endpoint - Has model_loaded field",
+      "passed": true,
+      "details": "Missing model_loaded",
+      "timestamp": "2025-08-24T16:36:27.405995"
+    },
+    {
+      "test_name": "Health endpoint - Database connected",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.406000"
+    },
+    {
+      "test_name": "Health endpoint - Model loaded",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.406005"
+    },
+    {
+      "test_name": "Auth endpoint - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.408851"
+    },
+    {
+      "test_name": "Auth endpoint - Valid JSON response",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.408893"
+    },
+    {
+      "test_name": "Auth endpoint - Has status field",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.408905"
+    },
+    {
+      "test_name": "Auth endpoint - Has message field",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.408913"
+    },
+    {
+      "test_name": "Auth endpoint - Has token field",
+      "passed": true,
+      "details": "Missing token",
+      "timestamp": "2025-08-24T16:36:27.408919"
+    },
+    {
+      "test_name": "Auth endpoint - Has user field",
+      "passed": true,
+      "details": "Missing user",
+      "timestamp": "2025-08-24T16:36:27.408927"
+    },
+    {
+      "test_name": "Auth endpoint - Success status",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.408932"
+    },
+    {
+      "test_name": "Auth endpoint - Token format",
+      "passed": true,
+      "details": "Token: mock_token_testuser_1756033587.408155",
+      "timestamp": "2025-08-24T16:36:27.408939"
+    },
+    {
+      "test_name": "Auth endpoint - Missing credentials handling",
+      "passed": true,
+      "details": "Got 400",
+      "timestamp": "2025-08-24T16:36:27.410940"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.415168"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Valid JSON",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.415194"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has status",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.415203"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has result",
+      "passed": true,
+      "details": "Missing result",
+      "timestamp": "2025-08-24T16:36:27.415210"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has confidence",
+      "passed": true,
+      "details": "Missing confidence",
+      "timestamp": "2025-08-24T16:36:27.415216"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has message",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.415222"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has text_length",
+      "passed": true,
+      "details": "Missing text_length",
+      "timestamp": "2025-08-24T16:36:27.415228"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has threshold",
+      "passed": true,
+      "details": "Missing threshold",
+      "timestamp": "2025-08-24T16:36:27.415234"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Has timestamp",
+      "passed": true,
+      "details": "Missing timestamp",
+      "timestamp": "2025-08-24T16:36:27.415239"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Confidence in range [0,1]",
+      "passed": true,
+      "details": "Confidence: 0.4847",
+      "timestamp": "2025-08-24T16:36:27.415249"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Valid result",
+      "passed": true,
+      "details": "Result: real",
+      "timestamp": "2025-08-24T16:36:27.415256"
+    },
+    {
+      "test_name": "Detect endpoint - Short real news - Correct text length",
+      "passed": true,
+      "details": "Expected: 73, Got: 73",
+      "timestamp": "2025-08-24T16:36:27.415263"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.418555"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Valid JSON",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.418582"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has status",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.418591"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has result",
+      "passed": true,
+      "details": "Missing result",
+      "timestamp": "2025-08-24T16:36:27.418598"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has confidence",
+      "passed": true,
+      "details": "Missing confidence",
+      "timestamp": "2025-08-24T16:36:27.418605"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has message",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.418611"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has text_length",
+      "passed": true,
+      "details": "Missing text_length",
+      "timestamp": "2025-08-24T16:36:27.418617"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has threshold",
+      "passed": true,
+      "details": "Missing threshold",
+      "timestamp": "2025-08-24T16:36:27.418623"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Has timestamp",
+      "passed": true,
+      "details": "Missing timestamp",
+      "timestamp": "2025-08-24T16:36:27.418629"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Confidence in range [0,1]",
+      "passed": true,
+      "details": "Confidence: 0.4907",
+      "timestamp": "2025-08-24T16:36:27.418639"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Valid result",
+      "passed": true,
+      "details": "Result: real",
+      "timestamp": "2025-08-24T16:36:27.418646"
+    },
+    {
+      "test_name": "Detect endpoint - Long fake news - Correct text length",
+      "passed": true,
+      "details": "Expected: 303, Got: 303",
+      "timestamp": "2025-08-24T16:36:27.418654"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.422996"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Valid JSON",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.423036"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has status",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.423045"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has result",
+      "passed": true,
+      "details": "Missing result",
+      "timestamp": "2025-08-24T16:36:27.423052"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has confidence",
+      "passed": true,
+      "details": "Missing confidence",
+      "timestamp": "2025-08-24T16:36:27.423058"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has message",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.423064"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has text_length",
+      "passed": true,
+      "details": "Missing text_length",
+      "timestamp": "2025-08-24T16:36:27.423070"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has threshold",
+      "passed": true,
+      "details": "Missing threshold",
+      "timestamp": "2025-08-24T16:36:27.423075"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Has timestamp",
+      "passed": true,
+      "details": "Missing timestamp",
+      "timestamp": "2025-08-24T16:36:27.423081"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Confidence in range [0,1]",
+      "passed": true,
+      "details": "Confidence: 0.513",
+      "timestamp": "2025-08-24T16:36:27.423091"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Valid result",
+      "passed": true,
+      "details": "Result: fake",
+      "timestamp": "2025-08-24T16:36:27.423100"
+    },
+    {
+      "test_name": "Detect endpoint - Medium length news - Correct text length",
+      "passed": true,
+      "details": "Expected: 201, Got: 201",
+      "timestamp": "2025-08-24T16:36:27.423107"
+    },
+    {
+      "test_name": "Detect endpoint - Empty text handling",
+      "passed": true,
+      "details": "Got 400",
+      "timestamp": "2025-08-24T16:36:27.425372"
+    },
+    {
+      "test_name": "Detect endpoint - Missing text field handling",
+      "passed": true,
+      "details": "Got 400",
+      "timestamp": "2025-08-24T16:36:27.427166"
+    },
+    {
+      "test_name": "History endpoint - Status code 200",
+      "passed": true,
+      "details": "Got 200",
+      "timestamp": "2025-08-24T16:36:27.428989"
+    },
+    {
+      "test_name": "History endpoint - Valid JSON response",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.429020"
+    },
+    {
+      "test_name": "History endpoint - Has status field",
+      "passed": true,
+      "details": "Missing status",
+      "timestamp": "2025-08-24T16:36:27.429031"
+    },
+    {
+      "test_name": "History endpoint - Has message field",
+      "passed": true,
+      "details": "Missing message",
+      "timestamp": "2025-08-24T16:36:27.429038"
+    },
+    {
+      "test_name": "History endpoint - Has data field",
+      "passed": true,
+      "details": "Missing data",
+      "timestamp": "2025-08-24T16:36:27.429044"
+    },
+    {
+      "test_name": "History endpoint - Has count field",
+      "passed": true,
+      "details": "Missing count",
+      "timestamp": "2025-08-24T16:36:27.429050"
+    },
+    {
+      "test_name": "History endpoint - Data is list",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.429055"
+    },
+    {
+      "test_name": "History endpoint - Count is integer",
+      "passed": true,
+      "details": "",
+      "timestamp": "2025-08-24T16:36:27.429059"
+    },
+    {
+      "test_name": "CORS - Access-Control-Allow-Origin present",
+      "passed": true,
+      "details": "Missing Access-Control-Allow-Origin",
+      "timestamp": "2025-08-24T16:36:27.433586"
+    },
+    {
+      "test_name": "CORS - Access-Control-Allow-Methods present",
+      "passed": false,
+      "details": "Missing Access-Control-Allow-Methods",
+      "timestamp": "2025-08-24T16:36:27.433601"
+    },
+    {
+      "test_name": "CORS - Access-Control-Allow-Headers present",
+      "passed": false,
+      "details": "Missing Access-Control-Allow-Headers",
+      "timestamp": "2025-08-24T16:36:27.433608"
+    },
+    {
+      "test_name": "Performance - Health endpoint response time < 2s",
+      "passed": true,
+      "details": "Response time: 0.004s",
+      "timestamp": "2025-08-24T16:36:27.437478"
+    },
+    {
+      "test_name": "Performance - Detect endpoint response time < 5s",
+      "passed": true,
+      "details": "Response time: 0.003s",
+      "timestamp": "2025-08-24T16:36:27.440138"
+    }
+  ]
+}

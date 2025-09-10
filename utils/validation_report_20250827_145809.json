@@ -1,0 +1,124 @@
+{
+  "validation_summary": {
+    "timestamp": "2025-08-27T14:58:09.884810",
+    "total_validation_time": 121.9784209728241,
+    "total_tests": 11,
+    "successful_tests": 11,
+    "success_rate": 100.0,
+    "meets_performance_sla": true,
+    "system_status": "PASS"
+  },
+  "detailed_results": {
+    "text_detection": {
+      "test_type": "text_detection",
+      "total_tests": 3,
+      "successful_tests": 3,
+      "results": [
+        {
+          "test_case": 1,
+          "description": "Obviously fake health claim",
+          "status": "success",
+          "verdict": "real",
+          "confidence": 0.575,
+          "processing_time": 15.01858401298523,
+          "has_evidence": true,
+          "has_mhfn_output": true,
+          "response_format_valid": true
+        },
+        {
+          "test_case": 2,
+          "description": "Realistic financial news",
+          "status": "success",
+          "verdict": "real",
+          "confidence": 0.575,
+          "processing_time": 15.008239984512329,
+          "has_evidence": true,
+          "has_mhfn_output": true,
+          "response_format_valid": true
+        },
+        {
+          "test_case": 3,
+          "description": "Realistic local news",
+          "status": "success",
+          "verdict": "real",
+          "confidence": 0.575,
+          "processing_time": 15.01273512840271,
+          "has_evidence": true,
+          "has_mhfn_output": true,
+          "response_format_valid": true
+        }
+      ]
+    },
+    "url_detection": {
+      "test_type": "url_detection",
+      "total_tests": 2,
+      "successful_tests": 2,
+      "results": [
+        {
+          "test_case": 1,
+          "description": "Legitimate news source",
+          "status": "success",
+          "verdict": "real",
+          "confidence": 0.04,
+          "processing_time": 15.010838985443115,
+          "has_evidence": false,
+          "response_format_valid": true
+        },
+        {
+          "test_case": 2,
+          "description": "Reputable news agency",
+          "status": "success",
+          "verdict": "real",
+          "confidence": 0.04,
+          "processing_time": 15.009730815887451,
+          "has_evidence": false,
+          "response_format_valid": true
+        }
+      ]
+    },
+    "api_endpoints": {
+      "test_type": "api_endpoints",
+      "total_endpoints": 3,
+      "successful_endpoints": 3,
+      "results": [
+        {
+          "endpoint": "/api/health",
+          "method": "GET",
+          "description": "Health check endpoint",
+          "status_code": 200,
+          "status": "success",
+          "response_time": 0.0036401748657226562
+        },
+        {
+          "endpoint": "/api/live-feed",
+          "method": "GET",
+          "description": "Live news feed",
+          "status_code": 200,
+          "status": "success",
+          "response_time": 1.8572440147399902
+        },
+        {
+          "endpoint": "/api/history",
+          "method": "GET",
+          "description": "Detection history",
+          "status_code": 200,
+          "status": "success",
+          "response_time": 0.0057332515716552734
+        }
+      ]
+    },
+    "performance": {
+      "test_type": "performance",
+      "total_tests": 3,
+      "successful_tests": 3,
+      "average_processing_time": 15.015683968861898,
+      "processing_times": [
+        15.019521951675415,
+        15.016010999679565,
+        15.011518955230713
+      ],
+      "meets_sla_requirement": true,
+      "sla_range": "15-30 seconds"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "ani-news-scraper",
+  "version": "1.0.0",
+  "description": "Pure JavaScript backend for ANI news scraping and RSS integration",
+  "main": "ani_news_scraper.js",
+  "scripts": {
+    "start": "node ani_news_scraper.js",
+    "test": "node -e \"const scraper = require('./ani_news_scraper.js'); const s = new scraper(); s.fetchNews(5).then(articles => console.log('Test successful:', articles.length, 'articles'));\""
+  },
+  "dependencies": {
+    "jsdom": "^22.1.0"
+  },
+  "keywords": [
+    "news",
+    "scraper",
+    "ani",
+    "rss",
+    "javascript"
+  ],
+  "author": "Fake News Detection System",
+  "license": "MIT"
+}

@@ -1,0 +1,106 @@
+{
+  "validation_summary": {
+    "timestamp": "2025-08-27T14:51:27.302219",
+    "total_validation_time": 0.039491891860961914,
+    "total_tests": 11,
+    "successful_tests": 0,
+    "success_rate": 0.0,
+    "meets_performance_sla": false,
+    "system_status": "FAIL"
+  },
+  "detailed_results": {
+    "text_detection": {
+      "test_type": "text_detection",
+      "total_tests": 3,
+      "successful_tests": 0,
+      "results": [
+        {
+          "test_case": 1,
+          "description": "Obviously fake health claim",
+          "status": "failed",
+          "error": "HTTP 403: ",
+          "processing_time": 0.015220165252685547
+        },
+        {
+          "test_case": 2,
+          "description": "Realistic financial news",
+          "status": "failed",
+          "error": "HTTP 403: ",
+          "processing_time": 0.002834320068359375
+        },
+        {
+          "test_case": 3,
+          "description": "Realistic local news",
+          "status": "failed",
+          "error": "HTTP 403: ",
+          "processing_time": 0.0020728111267089844
+        }
+      ]
+    },
+    "url_detection": {
+      "test_type": "url_detection",
+      "total_tests": 2,
+      "successful_tests": 0,
+      "results": [
+        {
+          "test_case": 1,
+          "description": "Legitimate news source",
+          "status": "failed",
+          "error": "HTTP 403: ",
+          "processing_time": 0.0018200874328613281
+        },
+        {
+          "test_case": 2,
+          "description": "Reputable news agency",
+          "status": "failed",
+          "error": "HTTP 403: ",
+          "processing_time": 0.0015392303466796875
+        }
+      ]
+    },
+    "api_endpoints": {
+      "test_type": "api_endpoints",
+      "total_endpoints": 3,
+      "successful_endpoints": 0,
+      "results": [
+        {
+          "endpoint": "/api/health",
+          "method": "GET",
+          "description": "Health check endpoint",
+          "status_code": 403,
+          "status": "failed",
+          "response_time": 0.0014121532440185547
+        },
+        {
+          "endpoint": "/api/live-feed",
+          "method": "GET",
+          "description": "Live news feed",
+          "status_code": 403,
+          "status": "failed",
+          "response_time": 0.0024871826171875
+        },
+        {
+          "endpoint": "/api/history",
+          "method": "GET",
+          "description": "Detection history",
+          "status_code": 403,
+          "status": "failed",
+          "response_time": 0.003457784652709961
+        }
+      ]
+    },
+    "performance": {
+      "test_type": "performance",
+      "total_tests": 3,
+      "successful_tests": 0,
+      "average_processing_time": 0.002456029256184896,
+      "processing_times": [
+        0.0037670135498046875,
+        0.0020411014556884766,
+        0.0015599727630615234
+      ],
+      "meets_sla_requirement": false,
+      "sla_range": "15-30 seconds"
+    }
+  }
+}
