@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake News Detection Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="verification-styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>FakeNews AI</h2>
+                <p class="status-indicator">🟢 API Offline</p>
+                <p class="user-info">Guest User</p>
+                <p class="auth-status">Authentication required for full access</p>
+            </div>
+            
+            <div class="sidebar-content">
+                <div class="ai-powered-detection">
+                    <h3>🤖 AI-Powered Detection</h3>
+                    <p>Advanced Multi-Modal Fake News Detection</p>
+                </div>
+                
+                <!-- Serper API Configuration -->
+                <div class="serper-config">
+                    <h3>🔍 Serper API Config</h3>
+                    <div class="api-key-input">
+                        <input type="password" id="serperApiKey" placeholder="Enter Serper API Key">
+                        <button id="saveApiKey" class="btn-secondary">💾 Save</button>
+                    </div>
+                    <div class="api-status">
+                        <span id="serperStatus" class="status-indicator">🔴 Not Configured</span>
+                    </div>
+                </div>
+                
+                <div class="detection-stats">
+                    <div class="stat-item">
+                        <span class="stat-number" id="totalAnalyzed">0</span>
+                        <span class="stat-label">Total Analyzed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="factChecked">0</span>
+                        <span class="stat-label">Fact Checked</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="dashboard-header">
+                <h1>Fake News Detection Dashboard</h1>
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <span class="status-dot green"></span>
+                        <span>Proof Validation</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="input-tabs">
+                    <button class="tab-btn active" data-tab="text">📝 Text</button>
+                    <button class="tab-btn" data-tab="image">🖼️ Image</button>
+                    <button class="tab-btn" data-tab="url">🔗 URL</button>
+                </div>
+
+                <div class="tab-content active" id="textTab">
+                    <textarea id="newsText" placeholder="Enter news text to analyze..."></textarea>
+                    <div class="input-controls">
+                        <button id="detectBtn" class="btn-primary">🔍 Analyze Content</button>
+                        <button id="factCheckBtn" class="btn-secondary">🔍 Fact Check with Serper</button>
+                        <div class="text-stats">
+                            <span>Characters: <span id="textLength">0</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="imageTab">
+                    <div class="file-upload">
+                        <input type="file" id="imageFile" accept="image/*">
+                        <label for="imageFile">📁 Choose Image File</label>
+                        <div id="imagePreview"></div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="urlTab">
+                    <input type="url" id="newsUrl" placeholder="Enter URL to analyze...">
+                    <div id="urlPreview"></div>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <p>Analyzing content...</p>
+            </div>
+
+            <!-- Detection Results -->
+            <div id="detectionResult" class="detection-result">
+                <div class="result-header">
+                    <h3>Detection Results</h3>
+                    <div class="confidence-display">
+                        <span>Confidence: </span>
+                        <span id="confidenceScore">--</span>
+                    </div>
+                </div>
+                <div class="result-content">
+                    <p>No analysis performed yet. Enter content above and click "Analyze Content" to begin.</p>
+                </div>
+                <div class="result-stats">
+                    <span>Processing Time: <span id="processingTime">--</span>ms</span>
+                </div>
+            </div>
+
+            <!-- Extended Performance Metrics -->
+            <div class="verification-metrics">
+                <h3>📊 Extended Performance Metrics</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">Accuracy</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">Precision</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">Recall</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">--</div>
+                        <div class="metric-label">F1-Score</div>
+                    </div>
+                </div>
+                <button class="btn-secondary">Load Extended Metrics</button>
+            </div>
+
+            <!-- AI Explainability -->
+            <div class="explainability-section">
+                <h3>🧠 AI Explainability</h3>
+                <p>Click "Generate Explanation" to see AI reasoning for the last prediction.</p>
+                <button class="btn-secondary">Generate Explanation</button>
+            </div>
+
+            <!-- Live News Feed -->
+            <div class="live-feed-section">
+                <div class="feed-header">
+                    <h3>📡 Live News Feed</h3>
+                    <div class="feed-controls">
+                        <select id="feedSource">
+                            <option value="bbc">BBC News</option>
+                            <option value="reuters">Reuters</option>
+                            <option value="cnn">CNN</option>
+                        </select>
+                        <button id="autoRefreshToggle" class="btn-secondary">🔄 Manual Refresh</button>
+                    </div>
+                </div>
+                <div id="liveFeed" class="live-feed">
+                    <p>No news items available from this source.</p>
+                </div>
+                <div id="feedLoading" class="feed-loading hidden">
+                    <div class="spinner"></div>
+                    <p>Loading news feed...</p>
+                </div>
+            </div>
+
+            <!-- Recent Analysis History -->
+            <div class="history-section">
+                <h3>📋 Recent Analysis History</h3>
+                <div id="historyList" class="history-list">
+                    <p class="no-history">No analysis history available.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="script.js"></script>
+    <script src="fake-news-verification.js"></script>
+    <script src="content-result-verification.js"></script>
+</body>
+</html>

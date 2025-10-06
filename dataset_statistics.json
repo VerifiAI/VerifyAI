@@ -1,0 +1,11 @@
+{
+  "dataset_name": "Fakeddit",
+  "dataset_type": "Multimodal Fake News Detection",
+  "splits": {
+    "train": {
+      "total_samples": 501,
+      "label_distribution": {},
+      "text_stats": {
+        "total_text_samples": 501,
+        "avg_text_length": 50.59880239520958,
+        "max_text_length": 
