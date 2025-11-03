@@ -59,24 +59,7 @@
                 </div>
             </div>
             
-            <!-- Serper API Configuration -->
-            <div class="serper-config-section">
-                <h3 class="section-title">🔍 Serper API Configuration</h3>
-                <div class="api-config-form">
-                    <input type="password" id="serper-api-key" class="api-key-input" placeholder="Enter Serper API Key">
-                    <button class="save-api-key-btn" id="save-serper-key">
-                        <i class="fas fa-save"></i>
-                        Save Key
-                    </button>
-                    <div class="api-status" id="serper-status">🔴 Not Configured</div>
-                </div>
-                <div class="fact-check-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">Fact Checks:</span>
-                        <span class="stat-value" id="fact-check-count">0</span>
-                    </div>
-                </div>
-            </div>
+
             
             <div class="input-section">
                 <h3 class="section-title">Content Input</h3>
@@ -85,7 +68,7 @@
                     class="content-textarea" 
                     placeholder="Enter text, paste URL, or describe content to analyze..."
                     rows="4"
-                >Breaking: Scientists discover new species of dinosaur in remote Amazon rainforest. The 65-million-year-old fossils were found by international research team led by Dr. Sarah Martinez from Cambridge University. The discovery challenges existing theories about dinosaur extinction patterns and suggests some species may have survived longer than previously thought.</textarea>
+                ></textarea>
                 <div class="file-upload-area" id="file-upload">
                     <i class="fas fa-cloud-upload-alt"></i>
                     <span>Drop image here or click to upload</span>
@@ -195,7 +178,19 @@
                 </div>
             </section>
             
-
+            <!-- Final Result -->
+            <section class="analysis-card">
+                <div class="card-header">
+                    <h3 class="card-title">🎯 Final Result</h3>
+                    <button class="card-action-btn" id="final-result-btn">
+                        <i class="fas fa-check-circle"></i>
+                    </button>
+                </div>
+                <p class="card-subtitle">Comprehensive analysis conclusion</p>
+                <div class="card-content resizable-content" id="final-result-content">
+                    <!-- Final result will be dynamically loaded here -->
+                </div>
+            </section>
             
             <!-- AI Explainability -->
             <section class="analysis-card">

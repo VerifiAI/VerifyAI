@@ -3999,6 +3999,326 @@ def rss_fact_check():
         }), 500
 
 
+# Mistral API integration
+MISTRAL_API_KEY = os.getenv('MISTRAL_API_KEY')
+
+def get_real_time_context(text):
+    """
+    Get real-time context for fact-checking using Serper API
+    """
+    try:
+        if not SERPER_API_KEY:
+            logger.warning("SERPER_API_KEY not found - skipping real-time fact-checking")
+            return None
+        
+        # Extract key claims and entities from the text for fact-checking
+        import re
+        
+        # Look for specific claims, dates, names, and events
+        date_patterns = r'\b(20\d{2}|January|February|March|April|May|June|July|August|September|October|November|December|\d{1,2}\/\d{1,2}\/\d{2,4})\b'
+        name_patterns = r'\b[A-Z][a-z]+ [A-Z][a-z]+\b'  # Simple name detection
+        
+        dates = re.findall(date_patterns, text, re.IGNORECASE)
+        names = re.findall(name_patterns, text)
+        
+        # Create fact-checking queries
+        queries = []
+        
+        # Add general fact-check query
+        text_snippet = text[:100] + "..." if len(text) > 100 else text
+        queries.append(f'"{text_snippet}" fact check')
+        
+        # Add specific queries for names and dates
+        for name in names[:2]:  # Limit to first 2 names
+            queries.append(f'"{name}" news recent')
+        
+        for date in dates[:2]:  # Limit to first 2 dates
+            queries.append(f'"{date}" news events')
+        
+        # Search for real-time information
+        headers = {
+            'X-API-KEY': SERPER_API_KEY,
+            'Content-Type': 'application/json'
+        }
+        
+        real_time_info = []
+        
+        for query in queries[:3]:  # Limit to 3 queries to avoid rate limits
+            try:
+                payload = {
+                    'q': query,
+                    'num': 5,
+                    'gl': 'us',
+                    'hl': 'en'
+                }
+                
+                response = requests.post(
+                    'https://google.serper.dev/search',
+                    headers=headers,
+                    json=payload,
+                    timeout=10
+                )
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'organic' in data:
+                        for result in data['organic'][:3]:  # Top 3 results per query
+                            real_time_info.append({
+                                'title': result.get('title', ''),
+                                'snippet': result.get('snippet', ''),
+                                'link': result.get('link', ''),
+                                'query': query
+                            })
+                
+            except Exception as e:
+                logger.warning(f"Serper search failed for query '{query}': {e}")
+                continue
+        
+        return real_time_info if real_time_info else None
+        
+    except Exception as e:
+        logger.error(f"Real-time context retrieval failed: {e}")
+        return None
+
+
+def call_mistral_api(text, task_type="analyze"):
+    """
+    Call Mistral API for content analysis or explanation with real-time fact-checking
+    """
+    try:
+        if not MISTRAL_API_KEY:
+            raise ValueError("MISTRAL_API_KEY not found in environment variables")
+        
+        headers = {
+            'Authorization': f'Bearer {MISTRAL_API_KEY}',
+            'Content-Type': 'application/json'
+        }
+        
+        # Get real-time context for fact-checking
+        real_time_context = get_real_time_context(text)
+        
+        if task_type == "analyze":
+            # Enhanced prompt with real-time context
+            base_prompt = f"""Analyze the following text for fake news detection and provide a clear verdict:
+
+Text: {text}"""
+            
+            if real_time_context:
+                context_info = "\n\nReal-time fact-checking context:\n"
+                for i, info in enumerate(real_time_context[:5], 1):  # Limit to 5 items
+                    context_info += f"{i}. {info['title']}: {info['snippet']}\n"
+                
+                prompt = base_prompt + context_info + """
+
+Please analyze the text considering both the content and the real-time context provided above. Pay special attention to:
+1. Temporal accuracy (are dates and events current and correct?)
+2. Factual verification against recent sources
+3. Context consistency with current information
+
+Provide:
+1. A clear verdict (REAL or FAKE)
+2. Confidence score (0-1)
+3. Brief reasoning (2-3 sentences) that considers both content analysis and real-time verification
+
+Format your response as JSON with keys: verdict, confidence, reasoning"""
+            else:
+                prompt = base_prompt + """
+
+Please provide:
+1. A clear verdict (REAL or FAKE)
+2. Confidence score (0-1)
+3. Brief reasoning (2-3 sentences)
+
+Note: Real-time fact-checking was not available for this analysis.
+
+Format your response as JSON with keys: verdict, confidence, reasoning"""
+        
+        elif task_type == "explain":
+            # Enhanced explainability with real-time context
+            base_prompt = f"""Provide a detailed explainability analysis for fake news detection of the following text:
+
+Text: {text}"""
+            
+            if real_time_context:
+                context_info = "\n\nReal-time verification context:\n"
+                for i, info in enumerate(real_time_context[:5], 1):
+                    context_info += f"{i}. {info['title']}: {info['snippet']}\n"
+                
+                prompt = base_prompt + context_info + """
+
+Please explain considering both content analysis and real-time verification:
+1. Key linguistic patterns that indicate authenticity or deception
+2. Content analysis (factual claims, emotional language, bias indicators)
+3. Structural analysis (writing style, source credibility indicators)
+4. Real-time fact verification results and their impact on the assessment
+5. Overall reasoning for the classification
+
+Format your response as detailed explanatory text."""
+            else:
+                prompt = base_prompt + """
+
+Please explain:
+1. Key linguistic patterns that indicate authenticity or deception
+2. Content analysis (factual claims, emotional language, bias indicators)
+3. Structural analysis (writing style, source credibility indicators)
+4. Overall reasoning for the classification
+
+Note: Real-time fact-checking was not available for this analysis.
+
+Format your response as detailed explanatory text."""
+        
+        else:
+            raise ValueError(f"Unknown task_type: {task_type}")
+        
+        payload = {
+            "model": "mistral-large-latest",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ],
+            "temperature": 0.3,
+            "max_tokens": 1500  # Increased for enhanced analysis
+        }
+        
+        response = requests.post(
+            'https://api.mistral.ai/v1/chat/completions',
+            headers=headers,
+            json=payload,
+            timeout=30
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            content = result['choices'][0]['message']['content']
+            
+            if task_type == "analyze":
+                # Try to parse JSON response for analysis
+                try:
+                    import json
+                    parsed_content = json.loads(content)
+                    return {
+                        'status': 'success',
+                        'verdict': parsed_content.get('verdict', 'UNKNOWN'),
+                        'confidence': parsed_content.get('confidence', 0.5),
+                        'reasoning': parsed_content.get('reasoning', content),
+                        'real_time_enhanced': real_time_context is not None
+                    }
+                except json.JSONDecodeError:
+                    # Fallback if JSON parsing fails
+                    return {
+                        'status': 'success',
+                        'verdict': 'UNKNOWN',
+                        'confidence': 0.5,
+                        'reasoning': content,
+                        'real_time_enhanced': real_time_context is not None
+                    }
+            else:
+                # For explanation, return the content directly
+                return {
+                    'status': 'success',
+                    'explanation': content,
+                    'real_time_enhanced': real_time_context is not None
+                }
+        else:
+            logger.error(f"Mistral API error: {response.status_code} - {response.text}")
+            return {
+                'status': 'error',
+                'message': f'Mistral API error: {response.status_code}'
+            }
+            
+    except Exception as e:
+        logger.error(f"Mistral API call failed: {e}")
+        return {
+            'status': 'error',
+            'message': f'Mistral API call failed: {str(e)}'
+        }
+
+
+@app.route('/api/mistral-analyze', methods=['POST', 'OPTIONS'])
+def mistral_analyze():
+    """
+    Endpoint for Mistral-based content analysis (Final Result)
+    """
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No JSON data provided'}), 400
+        
+        text = data.get('text', '').strip()
+        if not text:
+            return jsonify({'status': 'error', 'message': 'No text provided for analysis'}), 400
+        
+        logger.info(f"Mistral analysis request for text: {text[:100]}...")
+        
+        # Call Mistral API for analysis
+        result = call_mistral_api(text, task_type="analyze")
+        
+        if result['status'] == 'success':
+            logger.info(f"Mistral analysis completed: {result['verdict']}")
+            return jsonify({
+                'status': 'success',
+                'verdict': result['verdict'],
+                'confidence': result['confidence'],
+                'reasoning': result['reasoning'],
+                'timestamp': datetime.now().isoformat(),
+                'source': 'mistral-ai'
+            }), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Mistral analyze endpoint error: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Internal server error: {str(e)}'
+        }), 500
+
+
+@app.route('/api/mistral-explain', methods=['POST', 'OPTIONS'])
+def mistral_explain():
+    """
+    Endpoint for Mistral-based AI explainability
+    """
+    if request.method == 'OPTIONS':
+        return jsonify({'status': 'ok'}), 200
+    
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'status': 'error', 'message': 'No JSON data provided'}), 400
+        
+        text = data.get('text', '').strip()
+        if not text:
+            return jsonify({'status': 'error', 'message': 'No text provided for explanation'}), 400
+        
+        logger.info(f"Mistral explanation request for text: {text[:100]}...")
+        
+        # Call Mistral API for explanation
+        result = call_mistral_api(text, task_type="explain")
+        
+        if result['status'] == 'success':
+            logger.info("Mistral explanation completed successfully")
+            return jsonify({
+                'status': 'success',
+                'explanation': result['explanation'],
+                'timestamp': datetime.now().isoformat(),
+                'source': 'mistral-ai'
+            }), 200
+        else:
+            return jsonify(result), 500
+            
+    except Exception as e:
+        logger.error(f"Mistral explain endpoint error: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': f'Internal server error: {str(e)}'
+        }), 500
+
 
 if __name__ == '__main__':
     try:

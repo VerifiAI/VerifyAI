@@ -26,9 +26,9 @@ warnings.filterwarnings('ignore')
 try:
     import shap
     SHAP_AVAILABLE = True
-except ImportError:
+except ImportError as e:
     SHAP_AVAILABLE = False
-    logging.warning("SHAP not available. Install with: pip install shap")
+    logging.warning(f"SHAP not available due to dependency issue: {e}. Running without SHAP explainability.")
 
 # LIME imports
 try:

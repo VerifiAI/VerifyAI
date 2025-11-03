@@ -14,7 +14,7 @@ const DEMO_MODE = false; // Real backend is running
 const SERPER_CONFIG = {
     baseUrl: 'https://google.serper.dev/search',
     newsUrl: 'https://google.serper.dev/news',
-    apiKey: localStorage.getItem('serperApiKey') || null
+    apiKey: localStorage.getItem('serperApiKey') || '0b95ccd48f33e0236e6cb83b97b1b21d26431f6c'
 };
 
 // Dashboard state management
@@ -32,7 +32,7 @@ const dashboardState = {
     },
     analysisHistory: [],
     currentUser: null,
-    serperEnabled: false,
+    serperEnabled: true,
     factCheckCount: 0
 };
 
@@ -90,6 +90,29 @@ function showLoading(sectionId) {
 }
 
 /**
+ * Hide loading indicator - removes loading state from UI elements
+ */
+function hideLoading() {
+    // Remove loading indicators from common UI elements
+    const loadingElements = document.querySelectorAll('.loading-container');
+    loadingElements.forEach(element => {
+        element.remove();
+    });
+    
+    // Reset analyze button state if it exists
+    const analyzeBtn = document.querySelector('.analyze-btn, #analyze-btn, button[onclick*="analyze"]');
+    if (analyzeBtn) {
+        analyzeBtn.disabled = false;
+        analyzeBtn.innerHTML = analyzeBtn.innerHTML.replace(/Loading\.\.\.|Analyzing\.\.\./g, 'Analyze Content');
+    }
+    
+    // Update dashboard state
+    if (typeof dashboardState !== 'undefined') {
+        dashboardState.isAnalyzing = false;
+    }
+}
+
+/**
  * Show error message in specific section
  * @param {string} sectionId - ID of the section to show error
  * @param {string} message - Error message to display
@@ -127,6 +150,325 @@ function getConfidenceColor(confidence) {
     if (confidence >= 0.8) return 'confidence-high';
     if (confidence >= 0.6) return 'confidence-medium';
     return 'confidence-low';
+}
+
+// =============================================================================
+// AI EXPLAINABILITY SECTION (MISTRAL API)
+// =============================================================================
+
+/**
+ * Update AI Explainability section using Mistral API
+ * @param {object} analysisResult - Analysis result containing text
+ */
+async function updateAIExplainabilityWithMistral(analysisResult, mistralResult = null) {
+    console.log('updateAIExplainabilityWithMistral called with:', analysisResult, mistralResult);
+    const container = document.getElementById('ai-explainability-content');
+    
+    try {
+        showLoading('ai-explainability-content');
+        
+        // If we have the mistral result from the Final Result section, use it
+        if (mistralResult) {
+            console.log('Using existing Mistral result for explainability:', mistralResult);
+            displayAIExplainability(mistralResult, container);
+            return;
+        }
+        
+        // Fallback: make a new request if no mistral result is provided
+        const text = analysisResult.text || analysisResult.input_text || '';
+        console.log('Text for Mistral explainability:', text);
+        if (!text) {
+            throw new Error('No text available for Mistral explainability');
+        }
+        
+        const requestUrl = `${API_ROOT}/mistral-explain`;
+        console.log('Making request to:', requestUrl);
+        
+        const mistralResponse = await fetch(requestUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        console.log('Mistral explain response status:', mistralResponse.status);
+        
+        if (!mistralResponse.ok) {
+            const errorData = await mistralResponse.json();
+            throw new Error(errorData.message || 'Failed to get Mistral explanation');
+        }
+
+        const mistralExplanation = await mistralResponse.json();
+        console.log('Mistral explanation result:', mistralExplanation);
+        displayAIExplainability(mistralExplanation, container);
+        
+    } catch (error) {
+        console.error('AI Explainability error:', error);
+        showError('ai-explainability-content', 'Failed to load AI explainability from Mistral AI');
+    }
+}
+
+/**
+ * Display AI Explainability from Mistral API
+ * @param {object} mistralExplanation - Explanation from Mistral API
+ * @param {HTMLElement} container - Container element
+ */
+function displayAIExplainability(mistralExplanation, container) {
+    if (!container) return;
+    
+    const reasoning = mistralExplanation.reasoning || 'No detailed reasoning provided';
+    const keyFactors = mistralExplanation.key_factors || [];
+    const methodology = mistralExplanation.methodology || 'Standard analysis methodology';
+    const confidence = mistralExplanation.confidence || 0;
+    const realTimeEnhanced = mistralExplanation.real_time_enhanced || false;
+    
+    container.innerHTML = `
+        <div class="explainability-display">
+            ${realTimeEnhanced ? `
+            <div class="real-time-indicator">
+                <div class="real-time-badge">
+                    <span class="real-time-icon">🔄</span>
+                    <span class="real-time-text">Enhanced with Real-Time Fact-Checking</span>
+                </div>
+                <p class="real-time-description">This analysis includes current information from web sources to verify claims and dates.</p>
+            </div>
+            ` : `
+            <div class="standard-indicator">
+                <div class="standard-badge">
+                    <span class="standard-icon">⚠️</span>
+                    <span class="standard-text">Standard Analysis (No Real-Time Data)</span>
+                </div>
+                <p class="standard-description">This analysis is based on the model's training data and may not reflect current events.</p>
+            </div>
+            `}
+            
+            <div class="reasoning-main">
+                <h4>🧠 Detailed Analysis Reasoning</h4>
+                <div class="reasoning-content">
+                    ${reasoning}
+                </div>
+            </div>
+            
+            ${keyFactors.length > 0 ? `
+            <div class="key-factors-section">
+                <h4>🔍 Key Factors Analyzed</h4>
+                <ul class="factors-list">
+                    ${keyFactors.map(factor => `<li class="factor-item">${factor}</li>`).join('')}
+                </ul>
+            </div>
+            ` : ''}
+            
+            <div class="methodology-section">
+                <h4>⚙️ Analysis Methodology</h4>
+                <p class="methodology-text">${methodology}</p>
+            </div>
+            
+            <div class="confidence-section">
+                <h4>📊 Confidence Level</h4>
+                <div class="confidence-display">
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${Math.round(confidence * 100)}%; background-color: ${getConfidenceColor(confidence)}"></div>
+                    </div>
+                    <span class="confidence-text">${Math.round(confidence * 100)}% Confidence</span>
+                </div>
+            </div>
+            
+            <div class="explainability-meta">
+                <span class="meta-item">🤖 Powered by Mistral AI</span>
+                ${realTimeEnhanced ? '<span class="meta-item">🌐 Real-Time Enhanced</span>' : ''}
+                <span class="meta-item">🕒 ${formatTimestamp(mistralExplanation.timestamp)}</span>
+            </div>
+        </div>
+        
+        <style>
+            .explainability-display {
+                padding: 20px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border-radius: 12px;
+                border: 1px solid #dee2e6;
+            }
+            
+            .real-time-indicator, .standard-indicator {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                border-left: 4px solid #007bff;
+            }
+            
+            .standard-indicator {
+                border-left-color: #ffc107;
+            }
+            
+            .real-time-badge, .standard-badge {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-weight: 600;
+                color: #007bff;
+                margin-bottom: 8px;
+            }
+            
+            .standard-badge {
+                color: #856404;
+            }
+            
+            .real-time-description, .standard-description {
+                margin: 0;
+                font-size: 0.9em;
+                color: #6c757d;
+                line-height: 1.4;
+            }
+            
+            .reasoning-main {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                border-left: 4px solid #28a745;
+                margin-bottom: 20px;
+            }
+            
+            .reasoning-main h4 {
+                margin: 0 0 15px 0;
+                color: #28a745;
+                font-size: 18px;
+            }
+            
+            .reasoning-content {
+                line-height: 1.7;
+                color: #495057;
+                font-size: 15px;
+            }
+            
+            .key-factors-section {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #17a2b8;
+                margin-bottom: 15px;
+            }
+            
+            .key-factors-section h4 {
+                margin: 0 0 10px 0;
+                color: #17a2b8;
+                font-size: 16px;
+            }
+            
+            .factors-list {
+                margin: 0;
+                padding-left: 20px;
+            }
+            
+            .factor-item {
+                margin-bottom: 8px;
+                color: #495057;
+                line-height: 1.5;
+            }
+            
+            .methodology-section {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #ffc107;
+                margin-bottom: 15px;
+            }
+            
+            .methodology-section h4 {
+                margin: 0 0 10px 0;
+                color: #856404;
+                font-size: 16px;
+            }
+            
+            .methodology-text {
+                margin: 0;
+                line-height: 1.6;
+                color: #495057;
+            }
+            
+            .confidence-section {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #6f42c1;
+                margin-bottom: 15px;
+            }
+            
+            .confidence-section h4 {
+                margin: 0 0 10px 0;
+                color: #6f42c1;
+                font-size: 16px;
+            }
+            
+            .confidence-display {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .confidence-bar {
+                flex: 1;
+                height: 10px;
+                background-color: #e9ecef;
+                border-radius: 5px;
+                overflow: hidden;
+            }
+            
+            .confidence-fill {
+                height: 100%;
+                transition: width 0.3s ease;
+            }
+            
+            .confidence-text {
+                font-weight: 600;
+                color: #495057;
+                min-width: 120px;
+            }
+            
+            .explainability-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #6c757d;
+                border-top: 1px solid #dee2e6;
+                padding-top: 15px;
+            }
+            
+            .meta-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+        </style>
+    `;
+}
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+/**
+ * Get confidence color based on confidence level
+ * @param {number} confidence - Confidence level (0-1)
+ * @returns {string} Color code
+ */
+function getConfidenceColor(confidence) {
+    if (confidence >= 0.8) return '#28a745'; // Green
+    if (confidence >= 0.6) return '#ffc107'; // Yellow
+    if (confidence >= 0.4) return '#fd7e14'; // Orange
+    return '#dc3545'; // Red
+}
+
+/**
+ * Format timestamp for display
+ * @param {string|number} timestamp - Timestamp to format
+ * @returns {string} Formatted timestamp
+ */
+function formatTimestamp(timestamp) {
+    if (!timestamp) return new Date().toLocaleTimeString();
+    
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString();
 }
 
 // =============================================================================
@@ -579,7 +921,7 @@ function updateFactCheckCount() {
  * @returns {Promise<Object>} - Verification result
  */
 async function verifyClaim(text) {
-    const res = await fetch(`${API_ROOT}/verify`, {
+    const res = await fetch(`${API_ROOT}/detect`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -767,6 +1109,8 @@ function updateUserInterface() {
  * Main content analysis function - connects to /api/detect endpoint
  */
 async function analyzeContent() {
+    console.log('analyzeContent function called');
+    
     if (dashboardState.isAnalyzing) {
         console.warn('Analysis already in progress');
         return;
@@ -774,6 +1118,7 @@ async function analyzeContent() {
     
     try {
         dashboardState.isAnalyzing = true;
+        console.log('Starting analysis...');
         
         // Show loading in proofs validation section
         showLoading('proofs-container');
@@ -782,6 +1127,9 @@ async function analyzeContent() {
         const contentInput = document.getElementById('content-input').value.trim();
         const imageInput = document.getElementById('image-input').files[0];
         const detectionModes = getSelectedDetectionModes();
+        
+        console.log('Content input:', contentInput);
+        console.log('Detection modes:', detectionModes);
         
         if (!contentInput && !imageInput) {
             throw new Error('Please provide content to analyze');
@@ -862,6 +1210,25 @@ async function analyzeContent() {
                 </div>
             `;
         }
+        
+        // Create analysis result for dashboard sections
+        const analysisResult = {
+            text: contentInput,
+            image_url: imageInput ? URL.createObjectURL(imageInput) : null,
+            prediction: {
+                label: verificationResults.verdict,
+                confidence: verificationResults.confidence
+            },
+            text_analysis: {
+                sentiment: 'Analyzed',
+                readability: 'Standard',
+                features: ['Fact-checked', 'Source-verified']
+            },
+            timestamp: new Date().toISOString()
+        };
+        
+        // Update all dashboard sections including Final Result and AI Explainability
+        await updateAllDashboardSections(analysisResult);
         
         console.log('✅ Fake news verification analysis complete!');
         
@@ -1008,6 +1375,8 @@ function getSelectedDetectionModes() {
  * @param {object} analysisResult - Complete analysis result from backend
  */
 async function updateAllDashboardSections(analysisResult) {
+    console.log('updateAllDashboardSections called with:', analysisResult);
+    
     try {
         // Update Content Analysis Result section
         updateContentAnalysisResult(analysisResult);
@@ -1015,8 +1384,13 @@ async function updateAllDashboardSections(analysisResult) {
         // Fetch and update Proofs Validation
         await updateProofsValidation(analysisResult.input_text || '');
         
-        // Update AI Explainability
-        await updateAIExplainability(analysisResult);
+        // Update Final Result section with Mistral API and get the result
+        console.log('Calling updateFinalResult...');
+        const mistralResult = await updateFinalResult(analysisResult);
+        
+        // Update AI Explainability with the same Mistral result
+        console.log('Calling updateAIExplainabilityWithMistral...');
+        await updateAIExplainabilityWithMistral(analysisResult, mistralResult);
         
         // Update Performance Metrics
         await updatePerformanceMetrics();
@@ -1024,6 +1398,218 @@ async function updateAllDashboardSections(analysisResult) {
     } catch (error) {
         console.error('Error updating dashboard sections:', error);
     }
+}
+
+// =============================================================================
+// FINAL RESULT SECTION (MISTRAL API)
+// =============================================================================
+
+/**
+ * Update Final Result section using Mistral API
+ * @param {object} analysisResult - Analysis result containing text
+ */
+async function updateFinalResult(analysisResult) {
+    const container = document.getElementById('final-result-content');
+    
+    try {
+        console.log('🎯 Starting updateFinalResult with:', analysisResult);
+        showLoading('final-result-content');
+        
+        const text = analysisResult.text || analysisResult.input_text || '';
+        console.log('🎯 Text for analysis:', text);
+        if (!text) {
+            throw new Error('No text available for Mistral analysis');
+        }
+        
+        console.log('🎯 Making request to:', `${API_ROOT}/mistral-analyze`);
+        const mistralResponse = await fetch(`${API_ROOT}/mistral-analyze`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ text: text })
+        });
+
+        console.log('🎯 Response status:', mistralResponse.status);
+        if (!mistralResponse.ok) {
+            const errorData = await mistralResponse.json();
+            console.error('🎯 API Error:', errorData);
+            throw new Error(errorData.message || 'Failed to get Mistral analysis');
+        }
+
+        const mistralResult = await mistralResponse.json();
+        console.log('🎯 Mistral result:', mistralResult);
+        displayFinalResult(mistralResult, container);
+        
+        // Return the mistral result for use in AI Explainability
+        return mistralResult;
+        
+    } catch (error) {
+        console.error('🎯 Final Result error:', error);
+        showError('final-result-content', 'Failed to load final result from Mistral AI');
+        return null;
+    }
+}
+
+/**
+ * Display Final Result from Mistral API
+ * @param {object} mistralResult - Result from Mistral API
+ * @param {HTMLElement} container - Container element
+ */
+function displayFinalResult(mistralResult, container) {
+    if (!container) return;
+    
+    // Extract verdict from the Mistral AI Analysis JSON response
+    let verdict = 'UNKNOWN';
+    
+    console.log('🎯 displayFinalResult received:', mistralResult);
+    
+    if (mistralResult && mistralResult.reasoning) {
+        // The actual verdict is nested inside the reasoning field as a JSON string
+        try {
+            // Extract JSON from markdown code blocks
+            const reasoningText = mistralResult.reasoning;
+            const jsonMatch = reasoningText.match(/```json\n([\s\S]*?)\n```/);
+            
+            if (jsonMatch && jsonMatch[1]) {
+                const parsedReasoning = JSON.parse(jsonMatch[1]);
+                verdict = parsedReasoning.verdict || 'UNKNOWN';
+                console.log('🎯 Extracted verdict from reasoning:', verdict);
+            }
+        } catch (e) {
+            console.error('🎯 Could not parse reasoning JSON:', e);
+            // Fallback to the top-level verdict if available
+            verdict = mistralResult.verdict || 'UNKNOWN';
+        }
+    } else if (mistralResult && mistralResult.verdict) {
+        verdict = mistralResult.verdict;
+    } else if (mistralResult && typeof mistralResult === 'string') {
+        // Try to parse if it's a JSON string
+        try {
+            const parsed = JSON.parse(mistralResult);
+            verdict = parsed.verdict || 'UNKNOWN';
+        } catch (e) {
+            console.log('Could not parse mistral result as JSON');
+        }
+    }
+    
+    // Determine verdict styling
+    const verdictClass = verdict.toLowerCase() === 'real' ? 'verdict-real' : 
+                        verdict.toLowerCase() === 'fake' ? 'verdict-fake' : 'verdict-unknown';
+    
+    container.innerHTML = `
+        <div class="final-result-display">
+            <div class="verdict-section">
+                <div class="verdict-badge ${verdictClass}">
+                    <span class="verdict-icon">${verdict.toLowerCase() === 'real' ? '✅' : verdict.toLowerCase() === 'fake' ? '❌' : '❓'}</span>
+                    <span class="verdict-text">${verdict}</span>
+                </div>
+            </div>
+        </div>
+        
+        <style>
+            .final-result-display {
+                padding: 20px;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                border-radius: 12px;
+                border: 1px solid #dee2e6;
+            }
+            
+            .verdict-section {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+            
+            .verdict-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-weight: bold;
+                font-size: 18px;
+                margin-bottom: 15px;
+            }
+            
+            .verdict-real {
+                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                color: #155724;
+                border: 2px solid #c3e6cb;
+            }
+            
+            .verdict-fake {
+                background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+                color: #721c24;
+                border: 2px solid #f5c6cb;
+            }
+            
+            .verdict-unknown {
+                background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+                color: #856404;
+                border: 2px solid #ffeaa7;
+            }
+            
+            .confidence-display {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .confidence-bar {
+                width: 200px;
+                height: 8px;
+                background-color: #e9ecef;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+            
+            .confidence-fill {
+                height: 100%;
+                transition: width 0.3s ease;
+            }
+            
+            .confidence-text {
+                font-weight: 600;
+                color: #495057;
+            }
+            
+            .reasoning-section {
+                background: white;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #007bff;
+                margin-bottom: 15px;
+            }
+            
+            .reasoning-section h4 {
+                margin: 0 0 10px 0;
+                color: #007bff;
+                font-size: 16px;
+            }
+            
+            .reasoning-text {
+                margin: 0;
+                line-height: 1.6;
+                color: #495057;
+            }
+            
+            .analysis-meta {
+                display: flex;
+                justify-content: space-between;
+                font-size: 12px;
+                color: #6c757d;
+                border-top: 1px solid #dee2e6;
+                padding-top: 10px;
+            }
+            
+            .meta-item {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+        </style>
+    `;
 }
 
 // =============================================================================
@@ -1036,7 +1622,7 @@ async function updateAllDashboardSections(analysisResult) {
  */
 function updateContentAnalysisResult(result) {
     const summaryContainer = document.getElementById('result-summary');
-    const contentContainer = document.getElementById('content-result-content');
+    const contentContainer = document.getElementById('final-result-content');
     
     // Update summary
     const prediction = result.prediction || {};
@@ -2701,9 +3287,16 @@ function initializeEventListeners() {
     // Action buttons for analysis sections
     const actionButtons = {
         'performance-metrics-btn': updatePerformanceMetrics,
+        'final-result-btn': () => {
+            if (dashboardState.currentAnalysis) {
+                updateFinalResult(dashboardState.currentAnalysis);
+            } else {
+                alert('Please run an analysis first');
+            }
+        },
         'ai-explainability-btn': () => {
             if (dashboardState.currentAnalysis) {
-                updateAIExplainability(dashboardState.currentAnalysis);
+                updateAIExplainabilityWithMistral(dashboardState.currentAnalysis);
             } else {
                 alert('Please run an analysis first');
             }
@@ -3307,10 +3900,11 @@ async function displaySerperAnalysisResults(report) {
                     verdictIcon = 'fa-check-circle';
                     verdictColor = '#10b981';
                 } else {
-                    verdict = crossVerificationResult.verdict || 'MIXED EVIDENCE';
-                    verdictClass = 'serper-mixed';
-                    verdictIcon = 'fa-balance-scale';
-                    verdictColor = '#8b5cf6';
+                    // Hidden: INSUFFICIENT DATA verdict
+                    // verdict = crossVerificationResult.verdict || 'INSUFFICIENT DATA';
+                    // verdictClass = 'serper-insufficient';
+                    // verdictIcon = 'fa-question-circle';
+                    // verdictColor = '#6b7280';
                 }
             }
         }
@@ -3345,10 +3939,10 @@ async function displaySerperAnalysisResults(report) {
                 verdictIcon = 'fa-exclamation-triangle';
                 verdictColor = '#f97316';
             } else {
-                verdict = 'MIXED EVIDENCE';
-                verdictClass = 'serper-mixed';
-                verdictIcon = 'fa-balance-scale';
-                verdictColor = '#8b5cf6';
+                verdict = 'INSUFFICIENT DATA';
+                verdictClass = 'serper-insufficient';
+                verdictIcon = 'fa-question-circle';
+                verdictColor = '#6b7280';
             }
         } else if (totalSources > 0) {
             verdict = 'INSUFFICIENT DATA';
@@ -3368,19 +3962,11 @@ async function displaySerperAnalysisResults(report) {
                 ${verdict}
             </div>
             <div style="color: #94a3b8; font-size: 0.9rem;">
-                Cross-Verification Analysis
             </div>
-        </div>
-        <div class="serper-summary-header">
-            <span class="serper-status-badge ${statusClass}">${status}</span>
-            <span class="serper-confidence-score">${confidence}% Confidence</span>
-        </div>
-        <div class="serper-claim-text">
-            <strong>Analyzed Claim:</strong> "${report.verification?.claim || 'Content analysis'}"
         </div>
         <div class="serper-stats-grid">
             <div class="serper-stat-item">
-                <span class="serper-stat-number">${supportingEvidence.length}</span>
+                <span class="serper-stat-number">${neutralEvidence.length}</span>
                 <span class="serper-stat-label">Supporting Sources</span>
             </div>
             <div class="serper-stat-item">
@@ -3388,7 +3974,7 @@ async function displaySerperAnalysisResults(report) {
                 <span class="serper-stat-label">Contradicting Sources</span>
             </div>
             <div class="serper-stat-item">
-                <span class="serper-stat-number">${neutralEvidence.length}</span>
+                <span class="serper-stat-number">${supportingEvidence.length}</span>
                 <span class="serper-stat-label">Neutral Sources</span>
             </div>
             <div class="serper-stat-item">
@@ -3434,7 +4020,7 @@ async function displaySerperAnalysisResults(report) {
     
     if (neutralEvidence.length > 0) {
         evidenceHTML += `
-            <h3 style="color: #f59e0b; margin: 2rem 0 1rem 0;">⚖️ Neutral Sources (${neutralEvidence.length})</h3>
+            <h3 style="color: #f59e0b; margin: 2rem 0 1rem 0;">⚖️ Supporting Sources (${neutralEvidence.length})</h3>
             <div class="serper-evidence-grid">
                 ${neutralEvidence.map(evidence => `
                     <div class="serper-evidence-card">
