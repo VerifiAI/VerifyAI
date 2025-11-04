@@ -161,51 +161,85 @@ function getConfidenceColor(confidence) {
  * @param {object} analysisResult - Analysis result containing text
  */
 async function updateAIExplainabilityWithMistral(analysisResult, mistralResult = null) {
-    console.log('updateAIExplainabilityWithMistral called with:', analysisResult, mistralResult);
     const container = document.getElementById('ai-explainability-content');
-    
-    try {
-        showLoading('ai-explainability-content');
-        
-        // If we have the mistral result from the Final Result section, use it
-        if (mistralResult) {
-            console.log('Using existing Mistral result for explainability:', mistralResult);
-            displayAIExplainability(mistralResult, container);
+    if (!container) return;
+
+    // Determine current query text
+    const queryText = (analysisResult && (analysisResult.text || analysisResult.input_text))
+        || (document.getElementById('content-input')?.value || '').trim();
+    if (!queryText) {
+        container.innerHTML = '<p class="no-data">Enter content to analyze, then try again.</p>';
+        return;
+    }
+
+    // Ensure we have Serper report for THIS query; auto-run if missing or stale
+    let serperReport = dashboardState.serperReport;
+    const needsSerperRefresh = !serperReport || (serperReport.claim && serperReport.claim !== queryText);
+    if (needsSerperRefresh) {
+        container.innerHTML = `
+            <div class="loading-container">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Collecting sources via SerperAPI…</p>
+            </div>
+        `;
+        try {
+            const report = await verifyNewsClaimWithSerper(queryText);
+            await displayIntegratedResults(report);
+            serperReport = report;
+        } catch (err) {
+            console.error('Serper auto-run failed:', err);
+            showError('ai-explainability-content', 'Unable to collect sources via SerperAPI.');
             return;
         }
-        
-        // Fallback: make a new request if no mistral result is provided
-        const text = analysisResult.text || analysisResult.input_text || '';
-        console.log('Text for Mistral explainability:', text);
-        if (!text) {
-            throw new Error('No text available for Mistral explainability');
+    }
+
+    // Ensure we have final verdict for THIS query; auto-generate via Final Result if missing or stale
+    let finalVerdict = mistralResult || dashboardState.finalVerdict;
+    const verdictClaim = dashboardState.finalVerdictClaim;
+    const needsVerdictRefresh = !finalVerdict || verdictClaim !== queryText;
+    if (needsVerdictRefresh) {
+        container.innerHTML = `
+            <div class="loading-container">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Generating final verdict…</p>
+            </div>
+        `;
+        try {
+            const verdictResult = await updateFinalResult({ text: queryText });
+            finalVerdict = verdictResult || dashboardState.finalVerdict;
+        } catch (err) {
+            console.error('Final verdict generation failed:', err);
+            showError('ai-explainability-content', 'Unable to generate final verdict.');
+            return;
         }
-        
-        const requestUrl = `${API_ROOT}/mistral-explain`;
-        console.log('Making request to:', requestUrl);
-        
-        const mistralResponse = await fetch(requestUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text })
+        if (!finalVerdict) {
+            showError('ai-explainability-content', 'Final verdict unavailable.');
+            return;
+        }
+    }
+
+    // Show lightweight loading state
+    container.innerHTML = `
+        <div class="loading-container">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Generating explanation with Mistral…</p>
+        </div>
+    `;
+
+    try {
+        const claimText = queryText || serperReport.claim || analysisResult?.text || analysisResult?.input_text || '';
+        const sourcesPayload = buildSerperSourcesPayload(serperReport);
+
+        const explanation = await callMistralForExplanation({
+            claim: claimText,
+            verdict: finalVerdict.verdict,
+            sources: sourcesPayload
         });
 
-        console.log('Mistral explain response status:', mistralResponse.status);
-        
-        if (!mistralResponse.ok) {
-            const errorData = await mistralResponse.json();
-            throw new Error(errorData.message || 'Failed to get Mistral explanation');
-        }
-
-        const mistralExplanation = await mistralResponse.json();
-        console.log('Mistral explanation result:', mistralExplanation);
-        displayAIExplainability(mistralExplanation, container);
-        
+        displayAIExplainability(explanation, container);
     } catch (error) {
-        console.error('AI Explainability error:', error);
-        showError('ai-explainability-content', 'Failed to load AI explainability from Mistral AI');
+        console.error('AI Explainability (Mistral) error:', error);
+        showError('ai-explainability-content', 'Unable to generate explanation from sources.');
     }
 }
 
@@ -215,232 +249,126 @@ async function updateAIExplainabilityWithMistral(analysisResult, mistralResult =
  * @param {HTMLElement} container - Container element
  */
 function displayAIExplainability(mistralExplanation, container) {
-    if (!container) return;
-    
-    const reasoning = mistralExplanation.reasoning || 'No detailed reasoning provided';
-    const keyFactors = mistralExplanation.key_factors || [];
-    const methodology = mistralExplanation.methodology || 'Standard analysis methodology';
-    const confidence = mistralExplanation.confidence || 0;
-    const realTimeEnhanced = mistralExplanation.real_time_enhanced || false;
-    
+    if (!container || !mistralExplanation) return;
+    const points = Array.isArray(mistralExplanation.reasons) ? mistralExplanation.reasons : [];
+    const methodology = mistralExplanation.methodology || 'Model-assisted fact-checking based strictly on provided sources.';
+
     container.innerHTML = `
-        <div class="explainability-display">
-            ${realTimeEnhanced ? `
-            <div class="real-time-indicator">
-                <div class="real-time-badge">
-                    <span class="real-time-icon">🔄</span>
-                    <span class="real-time-text">Enhanced with Real-Time Fact-Checking</span>
-                </div>
-                <p class="real-time-description">This analysis includes current information from web sources to verify claims and dates.</p>
-            </div>
-            ` : `
-            <div class="standard-indicator">
-                <div class="standard-badge">
-                    <span class="standard-icon">⚠️</span>
-                    <span class="standard-text">Standard Analysis (No Real-Time Data)</span>
-                </div>
-                <p class="standard-description">This analysis is based on the model's training data and may not reflect current events.</p>
-            </div>
-            `}
-            
-            <div class="reasoning-main">
-                <h4>🧠 Detailed Analysis Reasoning</h4>
-                <div class="reasoning-content">
-                    ${reasoning}
-                </div>
-            </div>
-            
-            ${keyFactors.length > 0 ? `
-            <div class="key-factors-section">
-                <h4>🔍 Key Factors Analyzed</h4>
-                <ul class="factors-list">
-                    ${keyFactors.map(factor => `<li class="factor-item">${factor}</li>`).join('')}
+        <div class="explainability-card">
+            <div class="explainability-section">
+                <h4><i class="fas fa-lightbulb"></i> Key Reasons</h4>
+                <ul class="explainability-list">
+                    ${points.length > 0 ? points.map(r => `<li>${r}</li>`).join('') : '<li>No reasons provided.</li>'}
                 </ul>
             </div>
-            ` : ''}
-            
-            <div class="methodology-section">
-                <h4>⚙️ Analysis Methodology</h4>
-                <p class="methodology-text">${methodology}</p>
-            </div>
-            
-            <div class="confidence-section">
-                <h4>📊 Confidence Level</h4>
-                <div class="confidence-display">
-                    <div class="confidence-bar">
-                        <div class="confidence-fill" style="width: ${Math.round(confidence * 100)}%; background-color: ${getConfidenceColor(confidence)}"></div>
-                    </div>
-                    <span class="confidence-text">${Math.round(confidence * 100)}% Confidence</span>
-                </div>
-            </div>
-            
-            <div class="explainability-meta">
-                <span class="meta-item">🤖 Powered by Mistral AI</span>
-                ${realTimeEnhanced ? '<span class="meta-item">🌐 Real-Time Enhanced</span>' : ''}
-                <span class="meta-item">🕒 ${formatTimestamp(mistralExplanation.timestamp)}</span>
+            <div class="explainability-section">
+                <h4><i class="fas fa-cogs"></i> Methodology</h4>
+                <p>${methodology}</p>
             </div>
         </div>
-        
-        <style>
-            .explainability-display {
-                padding: 20px;
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                border-radius: 12px;
-                border: 1px solid #dee2e6;
-            }
-            
-            .real-time-indicator, .standard-indicator {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                margin-bottom: 20px;
-                border-left: 4px solid #007bff;
-            }
-            
-            .standard-indicator {
-                border-left-color: #ffc107;
-            }
-            
-            .real-time-badge, .standard-badge {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                font-weight: 600;
-                color: #007bff;
-                margin-bottom: 8px;
-            }
-            
-            .standard-badge {
-                color: #856404;
-            }
-            
-            .real-time-description, .standard-description {
-                margin: 0;
-                font-size: 0.9em;
-                color: #6c757d;
-                line-height: 1.4;
-            }
-            
-            .reasoning-main {
-                background: white;
-                padding: 20px;
-                border-radius: 8px;
-                border-left: 4px solid #28a745;
-                margin-bottom: 20px;
-            }
-            
-            .reasoning-main h4 {
-                margin: 0 0 15px 0;
-                color: #28a745;
-                font-size: 18px;
-            }
-            
-            .reasoning-content {
-                line-height: 1.7;
-                color: #495057;
-                font-size: 15px;
-            }
-            
-            .key-factors-section {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #17a2b8;
-                margin-bottom: 15px;
-            }
-            
-            .key-factors-section h4 {
-                margin: 0 0 10px 0;
-                color: #17a2b8;
-                font-size: 16px;
-            }
-            
-            .factors-list {
-                margin: 0;
-                padding-left: 20px;
-            }
-            
-            .factor-item {
-                margin-bottom: 8px;
-                color: #495057;
-                line-height: 1.5;
-            }
-            
-            .methodology-section {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #ffc107;
-                margin-bottom: 15px;
-            }
-            
-            .methodology-section h4 {
-                margin: 0 0 10px 0;
-                color: #856404;
-                font-size: 16px;
-            }
-            
-            .methodology-text {
-                margin: 0;
-                line-height: 1.6;
-                color: #495057;
-            }
-            
-            .confidence-section {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #6f42c1;
-                margin-bottom: 15px;
-            }
-            
-            .confidence-section h4 {
-                margin: 0 0 10px 0;
-                color: #6f42c1;
-                font-size: 16px;
-            }
-            
-            .confidence-display {
-                display: flex;
-                align-items: center;
-                gap: 15px;
-            }
-            
-            .confidence-bar {
-                flex: 1;
-                height: 10px;
-                background-color: #e9ecef;
-                border-radius: 5px;
-                overflow: hidden;
-            }
-            
-            .confidence-fill {
-                height: 100%;
-                transition: width 0.3s ease;
-            }
-            
-            .confidence-text {
-                font-weight: 600;
-                color: #495057;
-                min-width: 120px;
-            }
-            
-            .explainability-meta {
-                display: flex;
-                justify-content: space-between;
-                font-size: 12px;
-                color: #6c757d;
-                border-top: 1px solid #dee2e6;
-                padding-top: 15px;
-            }
-            
-            .meta-item {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-        </style>
     `;
+}
+
+// =============================================================================
+// MISTRAL INTEGRATION HELPERS
+// =============================================================================
+
+// Use the provided API key for Mistral
+const MISTRAL_API_KEY = '0PlpMy2o7ntphZZpTiCT3A4sRpXlZqMl';
+
+function buildSerperSourcesPayload(report) {
+    const supporting = report.analysis?.supportingEvidence || [];
+    const contradicting = report.analysis?.contradictingEvidence || [];
+    const neutral = report.analysis?.neutralEvidence || [];
+    const all = [
+        ...supporting.map(s => ({...s, stance: 'supporting'})),
+        ...contradicting.map(s => ({...s, stance: 'contradicting'})),
+        ...neutral.map(s => ({...s, stance: 'neutral'}))
+    ];
+    return all.map(s => ({
+        title: s.title || '',
+        snippet: s.snippet || s.description || '',
+        link: s.link || s.url || '',
+        source: s.source || s.source_name || s.displayLink || '',
+        stance: s.stance
+    }));
+}
+
+function buildSerperSourceSummaryText(claim, sources) {
+    const header = `Claim: ${claim}\nSources:`;
+    const lines = sources.slice(0, 20).map((s, i) => {
+        const domain = (() => { try { return new URL(s.link).hostname; } catch { return s.source || ''; } })();
+        return `${i+1}. [${s.stance}] ${s.title} — ${domain}\n   ${s.snippet}`;
+    });
+    return `${header}\n${lines.join('\n')}`;
+}
+
+async function callMistralForVerdict(payload) {
+    const { claim, sources } = payload;
+    const prompt = `You are a strict fact-checking assistant. Use ONLY the provided sources below. Decide if the claim is REAL or FAKE based solely on these sources.\nReturn a compact JSON: {"verdict": "REAL|FAKE", "confidence": 0-1, "rationale": "short"}.\n\n${buildSerperSourceSummaryText(claim, sources)}`;
+    const body = {
+        model: 'mistral-small-latest',
+        temperature: 0,
+        max_tokens: 200,
+        messages: [
+            { role: 'system', content: 'Return only JSON compliant with the schema.' },
+            { role: 'user', content: prompt }
+        ]
+    };
+    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`Mistral verdict error ${res.status}`);
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const parsed = tryParseJSONSafely(content);
+    return parsed || { verdict: 'UNKNOWN', confidence: 0, rationale: '' };
+}
+
+async function callMistralForExplanation(payload) {
+    const { claim, verdict, sources } = payload;
+    const prompt = `Explain briefly why the claim is ${verdict?.toUpperCase()}. Base your reasoning exclusively on the following sources. Provide 4-6 concise bullet points, each citing the relevant source title or domain. Also include a one-line methodology.\nReturn JSON: {"reasons": ["..."], "methodology": "..."}.\n\n${buildSerperSourceSummaryText(claim, sources)}`;
+    const body = {
+        model: 'mistral-small-latest',
+        temperature: 0,
+        max_tokens: 400,
+        messages: [
+            { role: 'system', content: 'Return only JSON with reasons[] and methodology.' },
+            { role: 'user', content: prompt }
+        ]
+    };
+    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${MISTRAL_API_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error(`Mistral explanation error ${res.status}`);
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content || '';
+    const parsed = tryParseJSONSafely(content);
+    return parsed || { reasons: [], methodology: 'Insufficient data.' };
+}
+
+function tryParseJSONSafely(text) {
+    try {
+        const trimmed = text.trim();
+        const start = trimmed.indexOf('{');
+        const end = trimmed.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            return JSON.parse(trimmed.slice(start, end + 1));
+        }
+        return JSON.parse(trimmed);
+    } catch (e) {
+        return null;
+    }
 }
 
 // =============================================================================
@@ -1134,6 +1062,9 @@ async function analyzeContent() {
         if (!contentInput && !imageInput) {
             throw new Error('Please provide content to analyze');
         }
+
+        // Reset Mistral-driven sections to avoid stale results on new queries
+        resetMistralSectionsForNewQuery(contentInput);
         
         // Determine input type for fake-news-verification.js
         let inputType = 'text';
@@ -1237,6 +1168,34 @@ async function analyzeContent() {
         showError('proofs-container', error.message);
     } finally {
         dashboardState.isAnalyzing = false;
+    }
+}
+
+// Reset Final Result and AI Explainability sections and related state for a new query
+function resetMistralSectionsForNewQuery(newText) {
+    // Clear cached Serper report and final verdict claim mapping
+    dashboardState.serperReport = null;
+    dashboardState.finalVerdict = null;
+    dashboardState.finalVerdictClaim = null;
+
+    // Soft-reset UI sections to indicate they will refresh for the new query
+    const finalContainer = document.getElementById('final-result-content');
+    if (finalContainer) {
+        finalContainer.innerHTML = `
+            <div class="loading-container">
+                <i class="fas fa-sync"></i>
+                <p>Ready to analyze new query for Final Result.</p>
+            </div>
+        `;
+    }
+    const explainContainer = document.getElementById('ai-explainability-content');
+    if (explainContainer) {
+        explainContainer.innerHTML = `
+            <div class="loading-container">
+                <i class="fas fa-sync"></i>
+                <p>Ready to generate new AI explanation.</p>
+            </div>
+        `;
     }
 }
 
@@ -1410,43 +1369,74 @@ async function updateAllDashboardSections(analysisResult) {
  */
 async function updateFinalResult(analysisResult) {
     const container = document.getElementById('final-result-content');
-    
+    if (!container) return null;
+
+    // Determine current query text
+    const queryText = (analysisResult && (analysisResult.text || analysisResult.input_text))
+        || (document.getElementById('content-input')?.value || '').trim();
+    if (!queryText) {
+        container.innerHTML = '<p class="no-data">Enter content to analyze, then try again.</p>';
+        return null;
+    }
+
+    // Ensure we have Serper results for THIS query to drive the verdict
+    let serperReport = dashboardState.serperReport;
+    const needsSerperRefresh = !serperReport || (serperReport.claim && serperReport.claim !== queryText);
+    if (needsSerperRefresh) {
+        // Auto-run Serper analysis using current content input
+
+        container.innerHTML = `
+            <div class="loading-container">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Collecting sources via SerperAPI…</p>
+            </div>
+        `;
+
+        try {
+            const report = await verifyNewsClaimWithSerper(queryText);
+            await displayIntegratedResults(report);
+            serperReport = report;
+        } catch (err) {
+            console.error('Serper auto-run failed:', err);
+            showError('final-result-content', 'Unable to collect sources via SerperAPI.');
+            return null;
+        }
+    }
+
+    // Show lightweight loading state
+    container.innerHTML = `
+        <div class="loading-container">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Analyzing sources with Mistral…</p>
+        </div>
+    `;
+
     try {
-        console.log('🎯 Starting updateFinalResult with:', analysisResult);
-        showLoading('final-result-content');
-        
-        const text = analysisResult.text || analysisResult.input_text || '';
-        console.log('🎯 Text for analysis:', text);
-        if (!text) {
-            throw new Error('No text available for Mistral analysis');
-        }
-        
-        console.log('🎯 Making request to:', `${API_ROOT}/mistral-analyze`);
-        const mistralResponse = await fetch(`${API_ROOT}/mistral-analyze`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: text })
-        });
+        const claimText = queryText || serperReport.claim || analysisResult?.text || analysisResult?.input_text || '';
+        const sourcesPayload = buildSerperSourcesPayload(serperReport);
 
-        console.log('🎯 Response status:', mistralResponse.status);
-        if (!mistralResponse.ok) {
-            const errorData = await mistralResponse.json();
-            console.error('🎯 API Error:', errorData);
-            throw new Error(errorData.message || 'Failed to get Mistral analysis');
-        }
+        const mistralResult = await callMistralForVerdict({ claim: claimText, sources: sourcesPayload });
 
-        const mistralResult = await mistralResponse.json();
-        console.log('🎯 Mistral result:', mistralResult);
-        displayFinalResult(mistralResult, container);
-        
-        // Return the mistral result for use in AI Explainability
+        // Persist verdict for explainability
+        dashboardState.finalVerdict = mistralResult;
+        dashboardState.finalVerdictClaim = claimText;
+
+        // Render verdict only (REAL or FAKE)
+        const verdict = (mistralResult.verdict || '').toUpperCase();
+        const isReal = verdict === 'REAL';
+        container.innerHTML = `
+            <div class="final-verdict">
+                <div class="verdict-badge ${isReal ? 'real' : 'fake'}">
+                    <i class="fas ${isReal ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                    ${isReal ? 'REAL' : 'FAKE'}
+                </div>
+            </div>
+        `;
+
         return mistralResult;
-        
     } catch (error) {
-        console.error('🎯 Final Result error:', error);
-        showError('final-result-content', 'Failed to load final result from Mistral AI');
+        console.error('Final Result (Mistral) error:', error);
+        showError('final-result-content', 'Unable to generate final verdict from sources.');
         return null;
     }
 }
@@ -1457,158 +1447,16 @@ async function updateFinalResult(analysisResult) {
  * @param {HTMLElement} container - Container element
  */
 function displayFinalResult(mistralResult, container) {
-    if (!container) return;
-    
-    // Extract verdict from the Mistral AI Analysis JSON response
-    let verdict = 'UNKNOWN';
-    
-    console.log('🎯 displayFinalResult received:', mistralResult);
-    
-    if (mistralResult && mistralResult.reasoning) {
-        // The actual verdict is nested inside the reasoning field as a JSON string
-        try {
-            // Extract JSON from markdown code blocks
-            const reasoningText = mistralResult.reasoning;
-            const jsonMatch = reasoningText.match(/```json\n([\s\S]*?)\n```/);
-            
-            if (jsonMatch && jsonMatch[1]) {
-                const parsedReasoning = JSON.parse(jsonMatch[1]);
-                verdict = parsedReasoning.verdict || 'UNKNOWN';
-                console.log('🎯 Extracted verdict from reasoning:', verdict);
-            }
-        } catch (e) {
-            console.error('🎯 Could not parse reasoning JSON:', e);
-            // Fallback to the top-level verdict if available
-            verdict = mistralResult.verdict || 'UNKNOWN';
-        }
-    } else if (mistralResult && mistralResult.verdict) {
-        verdict = mistralResult.verdict;
-    } else if (mistralResult && typeof mistralResult === 'string') {
-        // Try to parse if it's a JSON string
-        try {
-            const parsed = JSON.parse(mistralResult);
-            verdict = parsed.verdict || 'UNKNOWN';
-        } catch (e) {
-            console.log('Could not parse mistral result as JSON');
-        }
-    }
-    
-    // Determine verdict styling
-    const verdictClass = verdict.toLowerCase() === 'real' ? 'verdict-real' : 
-                        verdict.toLowerCase() === 'fake' ? 'verdict-fake' : 'verdict-unknown';
-    
+    if (!container || !mistralResult) return;
+    const verdict = (mistralResult.verdict || '').toUpperCase();
+    const isReal = verdict === 'REAL';
     container.innerHTML = `
-        <div class="final-result-display">
-            <div class="verdict-section">
-                <div class="verdict-badge ${verdictClass}">
-                    <span class="verdict-icon">${verdict.toLowerCase() === 'real' ? '✅' : verdict.toLowerCase() === 'fake' ? '❌' : '❓'}</span>
-                    <span class="verdict-text">${verdict}</span>
-                </div>
+        <div class="final-verdict">
+            <div class="verdict-badge ${isReal ? 'real' : 'fake'}">
+                <i class="fas ${isReal ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                ${isReal ? 'REAL' : 'FAKE'}
             </div>
         </div>
-        
-        <style>
-            .final-result-display {
-                padding: 20px;
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                border-radius: 12px;
-                border: 1px solid #dee2e6;
-            }
-            
-            .verdict-section {
-                text-align: center;
-                margin-bottom: 20px;
-            }
-            
-            .verdict-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 8px;
-                padding: 12px 24px;
-                border-radius: 25px;
-                font-weight: bold;
-                font-size: 18px;
-                margin-bottom: 15px;
-            }
-            
-            .verdict-real {
-                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-                color: #155724;
-                border: 2px solid #c3e6cb;
-            }
-            
-            .verdict-fake {
-                background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-                color: #721c24;
-                border: 2px solid #f5c6cb;
-            }
-            
-            .verdict-unknown {
-                background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-                color: #856404;
-                border: 2px solid #ffeaa7;
-            }
-            
-            .confidence-display {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }
-            
-            .confidence-bar {
-                width: 200px;
-                height: 8px;
-                background-color: #e9ecef;
-                border-radius: 4px;
-                overflow: hidden;
-            }
-            
-            .confidence-fill {
-                height: 100%;
-                transition: width 0.3s ease;
-            }
-            
-            .confidence-text {
-                font-weight: 600;
-                color: #495057;
-            }
-            
-            .reasoning-section {
-                background: white;
-                padding: 15px;
-                border-radius: 8px;
-                border-left: 4px solid #007bff;
-                margin-bottom: 15px;
-            }
-            
-            .reasoning-section h4 {
-                margin: 0 0 10px 0;
-                color: #007bff;
-                font-size: 16px;
-            }
-            
-            .reasoning-text {
-                margin: 0;
-                line-height: 1.6;
-                color: #495057;
-            }
-            
-            .analysis-meta {
-                display: flex;
-                justify-content: space-between;
-                font-size: 12px;
-                color: #6c757d;
-                border-top: 1px solid #dee2e6;
-                padding-top: 10px;
-            }
-            
-            .meta-item {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-            }
-        </style>
     `;
 }
 
@@ -2458,29 +2306,8 @@ function convertProofsToFactCheckReport(query, proofSources, verificationResult)
  */
 async function updateAIExplainability(analysisResult) {
     const container = document.getElementById('ai-explainability-content');
-    
-    try {
-        showLoading('ai-explainability-content');
-        
-        const explanationResponse = await fetch(`${API_ROOT}/explain`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ text: analysisResult.text, image_url: analysisResult.image_url })
-        });
-
-        if (!explanationResponse.ok) {
-            const errorData = await explanationResponse.json();
-            throw new Error(errorData.detail || 'Failed to fetch explanations from API');
-        }
-
-        const explanationResult = await explanationResponse.json();
-        displayExplanations(explanationResult, container);
-        
-    } catch (error) {
-        console.error('Explainability error:', error);
-        showError('ai-explainability-content', 'Failed to load AI explanations');
+    if (container) {
+        container.innerHTML = '';
     }
 }
 
@@ -2490,189 +2317,7 @@ async function updateAIExplainability(analysisResult) {
  * @param {HTMLElement} container - Container element
  */
 function displayExplanations(explanationResult, container) {
-    const explanations = [];
-    
-    // Enhanced SHAP explanations with visual improvements
-    if (explanationResult.explanation && explanationResult.explanation.shap_values && explanationResult.explanation.shap_values.length > 0) {
-        const shapValues = explanationResult.explanation.shap_values;
-        explanations.push(`
-            <div class="explanation-section enhanced-shap">
-                <div class="section-header">
-                    <h4><i class="fas fa-chart-bar"></i> SHAP Feature Importance</h4>
-                    <span class="method-badge ${shapValues[0]?.method?.includes('enhanced') ? 'enhanced' : 'fallback'}">
-                        ${shapValues[0]?.method?.includes('enhanced') ? '🚀 Enhanced' : '⚡ Fallback'}
-                    </span>
-                </div>
-                <div class="shap-features">
-                    ${shapValues.slice(0, 10).map((feature, index) => {
-                        const importance = feature.abs_importance || Math.abs(feature.importance || 0);
-                        const direction = feature.direction || (feature.importance > 0 ? 'fake' : 'real');
-                        const maxImportance = Math.max(...shapValues.map(f => f.abs_importance || Math.abs(f.importance || 0)));
-                        const widthPercent = maxImportance > 0 ? (importance / maxImportance) * 100 : 0;
-                        
-                        return `
-                            <div class="feature-item rank-${index + 1}">
-                                <div class="feature-header">
-                                    <span class="feature-rank">#${index + 1}</span>
-                                    <span class="feature-name">${feature.token || feature.name || `Feature ${index + 1}`}</span>
-                                    <span class="feature-direction ${direction}">${direction.toUpperCase()}</span>
-                                </div>
-                                <div class="feature-bar-container">
-                                    <div class="feature-bar ${direction}" style="width: ${widthPercent}%">
-                                        <div class="feature-value-label">${importance.toFixed(4)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-                <div class="shap-summary">
-                    <p><i class="fas fa-info-circle"></i> Showing top ${Math.min(10, shapValues.length)} most influential features</p>
-                </div>
-            </div>
-        `);
-    }
-    
-    // Enhanced LIME explanations
-    if (explanationResult.explanation && explanationResult.explanation.lime_explanation) {
-        const limeData = explanationResult.explanation.lime_explanation;
-        if (Array.isArray(limeData) && limeData.length > 0) {
-            explanations.push(`
-                <div class="explanation-section enhanced-lime">
-                    <div class="section-header">
-                        <h4><i class="fas fa-highlighter"></i> LIME Text Analysis</h4>
-                        <span class="method-badge ${limeData[0]?.method?.includes('enhanced') ? 'enhanced' : 'fallback'}">
-                            ${limeData[0]?.method?.includes('enhanced') ? '🚀 Enhanced' : '⚡ Fallback'}
-                        </span>
-                    </div>
-                    <div class="lime-features">
-                        ${limeData.slice(0, 8).map((item, index) => {
-                            const importance = item.abs_importance || Math.abs(item.importance || 0);
-                            const direction = item.direction || (item.importance > 0 ? 'fake' : 'real');
-                            return `
-                                <div class="lime-item ${direction}">
-                                    <span class="lime-token">${item.token || item.word || `Token ${index + 1}`}</span>
-                                    <span class="lime-score ${direction}">${importance.toFixed(3)}</span>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                </div>
-            `);
-        } else if (typeof limeData === 'string') {
-            explanations.push(`
-                <div class="explanation-section lime-text">
-                    <h4><i class="fas fa-highlighter"></i> LIME Analysis</h4>
-                    <div class="lime-message">${limeData}</div>
-                </div>
-            `);
-        }
-    }
-    
-    // Topic Clusters (BERTopic)
-    if (explanationResult.explanation && explanationResult.explanation.topic_clusters && explanationResult.explanation.topic_clusters.length > 0) {
-        const topics = explanationResult.explanation.topic_clusters;
-        explanations.push(`
-            <div class="explanation-section topic-analysis">
-                <div class="section-header">
-                    <h4><i class="fas fa-project-diagram"></i> Topic Analysis</h4>
-                    <span class="topic-count">${topics.length} topics found</span>
-                </div>
-                <div class="topic-clusters">
-                    ${topics.slice(0, 5).map((topic, index) => `
-                        <div class="topic-item">
-                            <div class="topic-header">
-                                <span class="topic-id">Topic ${topic.topic_id || index}</span>
-                                <span class="topic-score">${(topic.score || 0).toFixed(3)}</span>
-                            </div>
-                            <div class="topic-keywords">
-                                ${(topic.keywords || topic.words || []).slice(0, 5).map(keyword => 
-                                    `<span class="keyword-tag">${keyword}</span>`
-                                ).join('')}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `);
-    }
-    
-    // Grad-CAM Visual Analysis
-    if (explanationResult.explanation && explanationResult.explanation.grad_cam) {
-        const gradCam = explanationResult.explanation.grad_cam;
-        explanations.push(`
-            <div class="explanation-section grad-cam-analysis">
-                <div class="section-header">
-                    <h4><i class="fas fa-eye"></i> Visual Attention Analysis</h4>
-                    <span class="method-badge ${gradCam.method?.includes('enhanced') ? 'enhanced' : 'fallback'}">
-                        ${gradCam.method?.includes('enhanced') ? '🚀 Enhanced' : '⚡ Fallback'}
-                    </span>
-                </div>
-                <div class="grad-cam-content">
-                    ${gradCam.heatmap_available ? `
-                        <div class="attention-regions">
-                            <p><i class="fas fa-crosshairs"></i> ${gradCam.attention_regions?.length || 0} attention regions detected</p>
-                            ${gradCam.attention_regions ? gradCam.attention_regions.slice(0, 3).map((region, index) => `
-                                <div class="attention-region">
-                                    <span class="region-rank">#${index + 1}</span>
-                                    <span class="region-score">Score: ${region.score?.toFixed(3) || 'N/A'}</span>
-                                </div>
-                            `).join('') : ''}
-                        </div>
-                    ` : `
-                        <div class="grad-cam-message">
-                            <p>${gradCam.explanation || 'Visual analysis not available'}</p>
-                        </div>
-                    `}
-                </div>
-            </div>
-        `);
-    }
-    
-    // Explainability Fidelity Score
-    if (explanationResult.fidelity_score !== undefined) {
-        const fidelityScore = explanationResult.fidelity_score;
-        const fidelityClass = fidelityScore >= 0.8 ? 'high' : fidelityScore >= 0.6 ? 'medium' : 'low';
-        explanations.push(`
-            <div class="explanation-section fidelity-score">
-                <div class="section-header">
-                    <h4><i class="fas fa-certificate"></i> Explanation Quality</h4>
-                    <span class="fidelity-badge ${fidelityClass}">${(fidelityScore * 100).toFixed(1)}%</span>
-                </div>
-                <div class="fidelity-details">
-                    <div class="fidelity-bar">
-                        <div class="fidelity-fill ${fidelityClass}" style="width: ${fidelityScore * 100}%"></div>
-                    </div>
-                    <p class="fidelity-description">
-                        ${fidelityScore >= 0.8 ? '🟢 High-quality explanations with multiple methods' :
-                          fidelityScore >= 0.6 ? '🟡 Good explanations with some limitations' :
-                          '🔴 Basic explanations - consider additional analysis'}
-                    </p>
-                    ${explanationResult.enhanced_components ? `
-                        <div class="enhanced-components">
-                            <p><strong>Enhanced features:</strong> ${explanationResult.enhanced_components.join(', ')}</p>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `);
-    }
-    
-    // Processing time
-    if (explanationResult.processing_time_ms) {
-        explanations.push(`
-            <div class="explanation-section processing-time">
-                <div class="time-info">
-                    <i class="fas fa-clock"></i>
-                    <span>Analysis completed in ${explanationResult.processing_time_ms}ms</span>
-                </div>
-            </div>
-        `);
-    }
-    
-    container.innerHTML = explanations.length > 0 
-        ? `<div class="explanations-container">${explanations.join('')}</div>`
-        : '<div class="no-explanations"><i class="fas fa-info-circle"></i><p>No detailed explanations available for this analysis</p></div>';
+    // Stubbed: explanation rendering disabled
 }
 
 // =============================================================================
@@ -3842,6 +3487,8 @@ async function displayIntegratedResults(report) {
     if (serperSection) {
         serperSection.style.display = 'block';
     }
+    // Store latest report for Mistral-based verdict and explanation
+    dashboardState.serperReport = report;
     
     // Display SerperAPI results with integrated cross-verification
     await displaySerperAnalysisResults(report);
