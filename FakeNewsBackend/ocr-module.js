@@ -104,6 +104,123 @@ function fileToImage(file) {
 }
 
 // =============================================================================
+// MISTRAL REFINEMENT HELPER
+// =============================================================================
+
+/**
+ * Uses Mistral to correct OCR noise and extract the main claim.
+ * Falls back gracefully if the API is unavailable.
+ * @param {string} text - Cleaned OCR text
+ * @returns {Promise<{clean_text:string, main_claim:string, quality:number}>}
+ */
+/**
+ * Ensures `window.MISTRAL_API_KEY` is set by reading 
+ * the `.env` file served from the same origin when missing.
+ * WARNING: Exposes the API key to the browser if `.env` is publicly served.
+ */
+async function ensureMistralKeyFromEnv() {
+    if (window.MISTRAL_API_KEY && window.MISTRAL_API_KEY.trim().length > 0) {
+        return window.MISTRAL_API_KEY.trim();
+    }
+    try {
+        // Try loading from same-origin .env
+        const resp = await fetch('./.env', { cache: 'no-store' });
+        if (!resp.ok) return '';
+        const envText = await resp.text();
+        const match = envText.match(/^\s*MISTRAL_API_KEY\s*=\s*(.+)\s*$/m);
+        if (match && match[1]) {
+            window.MISTRAL_API_KEY = match[1].trim();
+            return window.MISTRAL_API_KEY;
+        }
+        return '';
+    } catch (_) {
+        return '';
+    }
+}
+
+async function refineOCRTextWithMistral(text) {
+    let apiKey = (window.MISTRAL_API_KEY || '').trim();
+    // If input text is empty or extremely short, bail early and let caller show error
+    if (!text || text.trim().length < 10) {
+        throw new Error('Insufficient OCR text for refinement');
+    }
+    if (!apiKey) {
+        apiKey = await ensureMistralKeyFromEnv();
+        if (!apiKey) throw new Error('Missing MISTRAL_API_KEY');
+    }
+
+    try {
+        const payload = {
+            model: 'mistral-small-latest',
+            temperature: 0.2,
+            max_tokens: 512,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You are an assistant that cleans OCR text and extracts the single most checkable claim. Return strict JSON with keys clean_text, main_claim, and quality (0-1). Keep content concise; remove duplicates and menu/boilerplate noise.'
+                },
+                {
+                    role: 'user',
+                    content: `Please clean the OCR text, remove noise/duplicates, and extract a single most checkable factual claim suitable for verification. Return strict JSON: {"clean_text":"...","main_claim":"...","quality":0-1}.
+\n\nOCR TEXT:\n\n${text}`
+                }
+            ]
+        };
+
+        const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+            console.warn('[OCR] Mistral API error:', resp.status, await resp.text());
+            return { clean_text: text, main_claim: text, quality: 0.5 };
+        }
+
+        const data = await resp.json();
+        const content = data?.choices?.[0]?.message?.content || '';
+
+        // Try parsing JSON content; if not JSON, return heuristic fallback
+        let parsed;
+        try {
+            parsed = JSON.parse(content);
+        } catch {
+            // Attempt to extract JSON block from text
+            const match = content.match(/\{[\s\S]*\}/);
+            if (match) {
+                try { parsed = JSON.parse(match[0]); } catch { /* ignore */ }
+            }
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+            return { clean_text: text, main_claim: text, quality: 0.6 };
+        }
+
+        // Sanitize to strip any accidental prompt echo or boilerplate
+        const clean_text_raw = (parsed.clean_text || text).trim();
+        const main_claim_raw = (parsed.main_claim || clean_text_raw || text).trim();
+
+        const clean_text = stripPromptArtifacts(clean_text_raw);
+        let main_claim = stripPromptArtifacts(main_claim_raw);
+        // If model echoed the task or produced empty output, fall back
+        if (!main_claim || /\bTask:\b/i.test(main_claim_raw)) {
+            main_claim = clean_text || text;
+        }
+
+        const quality = Number(parsed.quality || 0.7);
+        return { clean_text, main_claim, quality };
+    } catch (error) {
+        console.warn('[OCR] Mistral refinement failed:', error);
+        throw error;
+    }
+}
+
+// =============================================================================
 // SUBTASK 2: OCR INITIALIZATION
 // =============================================================================
 
@@ -114,7 +231,7 @@ let ocrWorker = null;
 let isWorkerInitialized = false;
 
 /**
- * Initializes Tesseract.js worker with lightweight configuration
+ * Initializes Tesseract.js worker with proper lifecycle and CDN fallbacks
  * @returns {Promise<Object>} - Promise resolving to initialized worker
  */
 async function initializeOCRWorker() {
@@ -122,39 +239,47 @@ async function initializeOCRWorker() {
         console.log('[OCR] Using existing worker instance');
         return ocrWorker;
     }
-    
+
     try {
         console.log('[OCR] Initializing Tesseract.js worker...');
-        
-        // Load Tesseract.js from CDN (lightweight approach)
+
+        // Load Tesseract.js from CDN (with fallback)
         if (typeof Tesseract === 'undefined') {
             await loadTesseractLibrary();
         }
-        
-        // Create worker with English language only
-        ocrWorker = await Tesseract.createWorker('eng', 1, {
+
+        // Create worker with proper options and then load/initialize language
+        ocrWorker = await Tesseract.createWorker({
             logger: m => {
                 if (m.status === 'recognizing text') {
-                    updateOCRProgress(Math.round(m.progress * 100));
+                    updateOCRProgress(Math.round(((m.progress || 0) * 100)));
                 }
             },
-            // Lightweight configuration for speed
             corePath: 'https://unpkg.com/tesseract.js-core@4.0.4/tesseract-core-simd.wasm.js',
-            workerPath: 'https://unpkg.com/tesseract.js@4.1.1/dist/worker.min.js'
+            workerPath: 'https://unpkg.com/tesseract.js@4.1.1/dist/worker.min.js',
+            langPath: 'https://tessdata.projectnaptha.com/4.0.0'
         });
-        
+
+        // Correct worker lifecycle
+        await ocrWorker.load();
+        await ocrWorker.loadLanguage('eng');
+        await ocrWorker.initialize('eng');
+
         // Set OCR engine parameters for speed optimization
         await ocrWorker.setParameters({
-            tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+            // Use AUTO for varied layouts; we will override per-pass when needed
+            tessedit_pageseg_mode: Tesseract.PSM.AUTO,
             tessedit_ocr_engine_mode: Tesseract.OEM.LSTM_ONLY,
-            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,!?;:"\'-()[]{}/@#$%^&*+=<>|\\~`'
+            preserve_interword_spaces: '1',
+            user_defined_dpi: '300',
+            tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 .,!?;:\"\'-()[]{}/@#$%^&*+=<>|\\~`'
         });
-        
+
         isWorkerInitialized = true;
         console.log('[OCR] Worker initialized successfully');
-        
+
         return ocrWorker;
-        
+
     } catch (error) {
         console.error('[OCR] Worker initialization failed:', error);
         throw new Error('Failed to initialize OCR engine. Please check your internet connection.');
@@ -171,12 +296,23 @@ function loadTesseractLibrary() {
             resolve();
             return;
         }
-        
-        const script = document.createElement('script');
-        script.src = 'https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js';
-        script.onload = resolve;
-        script.onerror = () => reject(new Error('Failed to load Tesseract.js library'));
-        document.head.appendChild(script);
+
+        const tryLoad = (src, onFail) => {
+            const script = document.createElement('script');
+            script.src = src;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => {
+                if (onFail) onFail(); else reject(new Error('Failed to load Tesseract.js library'));
+            };
+            document.head.appendChild(script);
+        };
+
+        // Primary CDN (unpkg) then fallback (jsdelivr)
+        tryLoad('https://unpkg.com/tesseract.js@4.1.1/dist/tesseract.min.js', () => {
+            console.warn('[OCR] Primary CDN failed, attempting fallback (jsdelivr)');
+            tryLoad('https://cdn.jsdelivr.net/npm/tesseract.js@4.1.1/dist/tesseract.min.js');
+        });
     });
 }
 
@@ -192,39 +328,84 @@ function loadTesseractLibrary() {
 function preprocessImage(img) {
     console.log('[OCR] Applying image preprocessing...');
     
+    // Upscale small images for better OCR
+    const upscaleFactor = Math.max(1, Math.min(2, 1000 / Math.max(img.width, 1)));
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
+    canvas.width = Math.round(img.width * upscaleFactor);
+    canvas.height = Math.round(img.height * upscaleFactor);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     
-    // Set canvas dimensions
-    canvas.width = img.width;
-    canvas.height = img.height;
-    
-    // Draw original image
-    ctx.drawImage(img, 0, 0);
-    
-    // Get image data for processing
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
     
-    // Apply grayscale and contrast enhancement
+    // Grayscale and simple adaptive thresholding based on mean intensity
+    let sum = 0;
     for (let i = 0; i < data.length; i += 4) {
-        // Convert to grayscale
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        sum += gray;
+    }
+    const mean = sum / (data.length / 4);
+    const threshold = Math.min(220, Math.max(60, mean));
+    
+    for (let i = 0; i < data.length; i += 4) {
         const gray = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-        
-        // Apply contrast enhancement (simple threshold)
-        const enhanced = gray > 128 ? Math.min(255, gray * 1.2) : Math.max(0, gray * 0.8);
-        
-        data[i] = enhanced;     // Red
-        data[i + 1] = enhanced; // Green
-        data[i + 2] = enhanced; // Blue
-        // Alpha channel remains unchanged
+        const bin = gray > threshold ? 255 : 0;
+        data[i] = bin;
+        data[i + 1] = bin;
+        data[i + 2] = bin;
+        // Keep alpha channel
     }
     
-    // Put processed data back to canvas
     ctx.putImageData(imageData, 0, 0);
-    
     console.log('[OCR] Image preprocessing completed');
     return canvas;
+}
+
+/**
+ * Aggressive preprocessing for tough images (extra upscale and threshold)
+ */
+function aggressivePreprocessImage(imgOrCanvas) {
+    const srcCanvas = imgOrCanvas instanceof HTMLCanvasElement ? imgOrCanvas : (() => {
+        const c = document.createElement('canvas');
+        const cx = c.getContext('2d');
+        c.width = imgOrCanvas.width; c.height = imgOrCanvas.height;
+        cx.drawImage(imgOrCanvas, 0, 0);
+        return c;
+    })();
+    const out = document.createElement('canvas');
+    const ox = out.getContext('2d');
+    const factor = 2;
+    out.width = srcCanvas.width * factor;
+    out.height = srcCanvas.height * factor;
+    ox.imageSmoothingEnabled = true;
+    ox.imageSmoothingQuality = 'high';
+    ox.drawImage(srcCanvas, 0, 0, out.width, out.height);
+    const id = ox.getImageData(0, 0, out.width, out.height);
+    const d = id.data;
+    // Strong binarization
+    for (let i = 0; i < d.length; i += 4) {
+        const gray = (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+        const bin = gray > 140 ? 255 : 0; // mid threshold
+        d[i] = bin; d[i + 1] = bin; d[i + 2] = bin;
+    }
+    ox.putImageData(id, 0, 0);
+    return out;
+}
+
+/**
+ * Crop bottom region (e.g., news ticker/banner) ratio of height
+ */
+function cropBottomRegion(imgOrCanvas, ratio = 0.35) {
+    const w = imgOrCanvas.width; const h = imgOrCanvas.height;
+    const startY = Math.max(0, Math.round(h * (1 - ratio)));
+    const out = document.createElement('canvas');
+    const ox = out.getContext('2d');
+    out.width = w; out.height = Math.round(h * ratio);
+    ox.drawImage(imgOrCanvas, 0, startY, w, out.height, 0, 0, w, out.height);
+    return out;
 }
 
 // =============================================================================
@@ -268,12 +449,37 @@ async function executeOCR(imageSource, options = {}) {
             updateOCRProgress(20, 'Extracting text...');
         }
         
-        // Perform OCR
-        const { data: { text, confidence } } = await worker.recognize(processedImage);
+        // First pass OCR
+        const { data: { text: text1, confidence: conf1 } } = await worker.recognize(processedImage);
+        let finalText = text1 || '';
+        let finalConf = conf1 || 0;
+
+        // Fallback passes for tough images
+        if ((finalText.trim().length < 10) && imageSource) {
+            // Try aggressive preprocessing
+            if (showProgress) updateOCRProgress(40, 'Enhancing image (aggressive)...');
+            const aggressive = aggressivePreprocessImage(processedImage);
+            await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_COLUMN });
+            const { data: { text: text2, confidence: conf2 } } = await worker.recognize(aggressive);
+            if ((text2 || '').trim().length > finalText.trim().length) {
+                finalText = text2; finalConf = conf2 || finalConf;
+            }
+
+            // Try cropping bottom banner region
+            if (finalText.trim().length < 10) {
+                if (showProgress) updateOCRProgress(60, 'Focusing on banner region...');
+                const cropped = cropBottomRegion(processedImage);
+                await worker.setParameters({ tessedit_pageseg_mode: Tesseract.PSM.SINGLE_LINE });
+                const { data: { text: text3, confidence: conf3 } } = await worker.recognize(cropped);
+                if ((text3 || '').trim().length > finalText.trim().length) {
+                    finalText = text3; finalConf = conf3 || finalConf;
+                }
+            }
+        }
         
         console.log('[OCR] Text extraction completed:', {
-            textLength: text.length,
-            confidence: Math.round(confidence)
+            textLength: finalText.length,
+            confidence: Math.round(finalConf)
         });
         
         // Update progress to completion
@@ -281,7 +487,7 @@ async function executeOCR(imageSource, options = {}) {
             updateOCRProgress(100, 'Text extraction complete!');
         }
         
-        return text;
+        return finalText;
         
     } catch (error) {
         console.error('[OCR] Text extraction failed:', error);
@@ -311,29 +517,13 @@ function postProcessOCRText(rawText) {
     cleanedText = cleanedText.replace(/\s+/g, ' ');
     
     // Fix common OCR errors
-    const ocrCorrections = {
-        // Common character misrecognitions
-        '0': 'O', // Zero to letter O in words
-        '1': 'I', // One to letter I in words
-        '5': 'S', // Five to letter S in words
-        '8': 'B', // Eight to letter B in words
-        // Add more corrections as needed
-    };
-    
-    // Apply corrections contextually (only in word contexts)
-    cleanedText = cleanedText.replace(/\b\w*\b/g, (word) => {
-        let correctedWord = word;
-        for (const [wrong, correct] of Object.entries(ocrCorrections)) {
-            // Only replace if it makes sense in context
-            if (word.includes(wrong) && /[a-zA-Z]/.test(word)) {
-                correctedWord = correctedWord.replace(new RegExp(wrong, 'g'), correct);
-            }
-        }
-        return correctedWord;
-    });
+    // Minimal normalization only; avoid aggressive character substitutions
     
     // Trim and clean up
     cleanedText = cleanedText.trim();
+
+    // Remove any accidental prompt or UI artifacts if present
+    cleanedText = stripPromptArtifacts(cleanedText);
     
     // Remove lines with only special characters or very short content
     cleanedText = cleanedText
@@ -347,6 +537,113 @@ function postProcessOCRText(rawText) {
     });
     
     return cleanedText;
+}
+
+// =============================================================================
+// MISTRAL VISION OCR
+// =============================================================================
+
+/**
+ * Convert a File to a data URL (base64) for API submission
+ * @param {File} file
+ * @returns {Promise<string>} data URL
+ */
+function fileToDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+    });
+}
+
+/**
+ * Uses Mistral Vision to extract text and the main claim directly from an image.
+ * Requires a valid `window.MISTRAL_API_KEY`. No fallbacks are used.
+ * @param {File} imageFile
+ * @returns {Promise<{clean_text:string, main_claim:string, quality:number}>}
+ */
+async function extractTextWithMistralVision(imageFile) {
+    let apiKey = (window.MISTRAL_API_KEY || '').trim();
+    if (!apiKey) {
+        apiKey = await ensureMistralKeyFromEnv();
+        if (!apiKey) throw new Error('Missing MISTRAL_API_KEY');
+    }
+    if (!imageFile) throw new Error('No image provided');
+
+    const dataUrl = await fileToDataURL(imageFile);
+
+    const payload = {
+        model: 'pixtral-large-latest',
+        temperature: 0.1,
+        max_tokens: 512,
+        messages: [
+            {
+                role: 'system',
+                content: 'You are a vision assistant. Read any text in the image and extract the single most checkable factual claim. Return strict JSON with keys clean_text, main_claim, and quality (0-1).'
+            },
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: 'Read the text in this image, clean noise, and return JSON.' },
+                    { type: 'image_url', image_url: dataUrl }
+                ]
+            }
+        ]
+    };
+
+    const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!resp.ok) {
+        throw new Error(`Mistral Vision API error: ${resp.status} ${await resp.text()}`);
+    }
+
+    const data = await resp.json();
+    const content = data?.choices?.[0]?.message?.content || '';
+
+    let parsed;
+    try { parsed = JSON.parse(content); } catch {
+        const match = content.match(/\{[\s\S]*\}/);
+        if (match) { try { parsed = JSON.parse(match[0]); } catch { /* ignore */ } }
+    }
+    if (!parsed || typeof parsed !== 'object') {
+        throw new Error('Mistral Vision response parsing failed');
+    }
+
+    const clean_text = stripPromptArtifacts((parsed.clean_text || '').trim());
+    const main_claim = stripPromptArtifacts((parsed.main_claim || clean_text).trim());
+    const quality = Number(parsed.quality || 0.7);
+    if (!main_claim || main_claim.length < 5) throw new Error('No meaningful text extracted from image');
+    return { clean_text, main_claim, quality };
+}
+
+/**
+ * Strips prompt/UI artifacts that may accidentally appear in outputs
+ * @param {string} text
+ * @returns {string}
+ */
+function stripPromptArtifacts(text) {
+    if (!text || typeof text !== 'string') return '';
+    let t = text;
+    const patterns = [
+        /\bOCR TEXT:\b[\s\S]*/gmi,
+        /\bTask:\b[\s\S]*/gmi,
+        /Extracted\s+Text:/gmi,
+        /Analyze\s+This\s+Text/gmi,
+        /Cancel/gmi
+    ];
+    patterns.forEach((p) => { t = t.replace(p, ''); });
+    // Collapse whitespace after removals
+    t = t.replace(/\s+/g, ' ').trim();
+    return t;
 }
 
 // =============================================================================
@@ -550,36 +847,27 @@ async function processImageForVerification(imageFile) {
             throw new Error(validation.message);
         }
         
-        // Step 2: Convert to image
-        showOCRLoadingState('Loading image...');
-        const img = await fileToImage(imageFile);
-        
-        // Step 3: Execute OCR
-        updateOCRProgress(5, 'Initializing OCR...');
-        const rawText = await executeOCR(img, {
-            usePreprocessing: true,
-            showProgress: true
-        });
-        
-        // Step 4: Post-process text
-        updateOCRProgress(95, 'Cleaning extracted text...');
-        const cleanedText = postProcessOCRText(rawText);
-        
-        // Step 5: Validate extracted text
-        if (!cleanedText || cleanedText.trim().length < 10) {
+        // Step 2: Use vision OCR directly (no local OCR fallback)
+        showOCRLoadingState('Fetching details using the OCR...');
+        updateOCRProgress(10, 'Fetching details using the OCR...');
+        const refined = await extractTextWithMistralVision(imageFile);
+        let finalText = stripPromptArtifacts((refined.main_claim || refined.clean_text || '').trim());
+
+        // Step 6: Validate extracted text
+        if (!finalText || finalText.trim().length < 10) {
             throw new Error('No readable text found in the image. Please try a clearer image.');
         }
-        
-        // Step 6: Show confirmation and get user approval
+
+        // Step 7: Show confirmation and get user approval
         hideOCRLoadingState();
-        const userConfirmed = await showExtractedTextConfirmation(cleanedText);
-        
+        const userConfirmed = await showExtractedTextConfirmation(finalText);
+
         if (!userConfirmed) {
             throw new Error('OCR processing cancelled by user');
         }
-        
+
         console.log('[OCR INTEGRATION] Image processing completed successfully');
-        return cleanedText;
+        return finalText;
         
     } catch (error) {
         console.error('[OCR INTEGRATION] Processing failed:', error);
@@ -608,39 +896,45 @@ async function handleImageAnalysis(imageFile) {
         // Process image and extract text
         const extractedText = await processImageForVerification(imageFile);
         
-        // Check if the existing pipeline function exists
+        // Preferred integration: populate input and trigger Dashboard analysis
+        const contentInput = document.getElementById('content-input');
+        if (contentInput) {
+            contentInput.value = extractedText;
+        }
+
+        if (typeof window.analyzeContent === 'function') {
+            console.log('[OCR INTEGRATION] Calling analyzeContent with OCR-refined text');
+            await window.analyzeContent();
+            return;
+        }
+
+        // Fallbacks to other pipelines if present
         if (typeof window.executeUniversalFactVerification === 'function') {
             console.log('[OCR INTEGRATION] Triggering universal fact verification pipeline...');
-            
-            // Trigger existing verification pipeline with extracted text
             await window.executeUniversalFactVerification(extractedText);
-            
-        } else if (typeof window.executeMultiStageRelevancePipeline === 'function') {
+            return;
+        }
+        if (typeof window.executeMultiStageRelevancePipeline === 'function') {
             console.log('[OCR INTEGRATION] Triggering multi-stage relevance pipeline...');
-            
-            // Trigger existing verification pipeline with extracted text
             await window.executeMultiStageRelevancePipeline(extractedText);
-            
-        } else if (typeof window.analyzeContentVerification === 'function') {
+            return;
+        }
+        if (typeof window.analyzeContentVerification === 'function') {
             console.log('[OCR INTEGRATION] Triggering legacy verification pipeline...');
-            
-            // Fallback to legacy pipeline
             await window.analyzeContentVerification(extractedText);
-            
-        } else {
-            console.warn('[OCR INTEGRATION] No verification pipeline found');
-            
-            // Show extracted text in results area as fallback
-            const resultsArea = document.getElementById('proofValidationArea') || document.getElementById('proofs-container');
-            if (resultsArea) {
-                resultsArea.innerHTML = `
-                    <div class="ocr-results">
-                        <h3>📄 Extracted Text (OCR)</h3>
-                        <div class="extracted-text-display" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; white-space: pre-wrap; font-family: monospace;">${extractedText}</div>
-                        <p><em>Note: Automatic verification pipeline not available. Please copy the text above for manual analysis.</em></p>
-                    </div>
-                `;
-            }
+            return;
+        }
+
+        console.warn('[OCR INTEGRATION] No verification pipeline found');
+        const resultsArea = document.getElementById('proofValidationArea') || document.getElementById('proofs-container');
+        if (resultsArea) {
+            resultsArea.innerHTML = `
+                <div class="ocr-results">
+                    <h3>📄 Extracted Text (OCR)</h3>
+                    <div class="extracted-text-display" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 10px 0; white-space: pre-wrap; font-family: monospace;">${extractedText}</div>
+                    <p><em>Note: Automatic verification pipeline not available. Please copy the text above for manual analysis.</em></p>
+                </div>
+            `;
         }
         
     } catch (error) {
@@ -703,17 +997,16 @@ async function processImageWithOCR(imageFile) {
         const img = await fileToImage(imageFile);
         
         // Execute OCR
-        const result = await executeOCR(img, {
+        const text = await executeOCR(img, {
             showProgress: true,
             preprocessImage: true
         });
         
-        if (result.success && result.text) {
+        if (text && text.trim().length > 0) {
             console.log('[OCR API] Text extraction successful');
-            return result.text;
-        } else {
-            throw new Error(result.error || 'OCR processing failed');
+            return text;
         }
+        throw new Error('No text extracted from image');
     } catch (error) {
         console.error('[OCR API] OCR processing error:', error);
         throw error;
@@ -731,16 +1024,16 @@ async function executeOCRPipeline(imageInput, options = {}) {
         }
         
         // Process the image
-        const result = await processImageWithOCR(imageInput, options);
+        const text = await processImageWithOCR(imageInput, options);
         
         // Enhanced result with pipeline metadata
         const pipelineResult = {
-            ...result,
+            text,
             pipeline: 'OCR',
             timestamp: new Date().toISOString(),
-            processingTime: result.processingTime || 0,
-            confidence: result.confidence || 0,
-            wordCount: result.text ? result.text.split(/\s+/).length : 0
+            processingTime: 0,
+            confidence: 0,
+            wordCount: text ? text.split(/\s+/).length : 0
         };
         
         console.log('OCR pipeline completed successfully');

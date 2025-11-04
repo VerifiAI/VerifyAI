@@ -10,6 +10,10 @@ const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 1000; // 1 second
 const DEMO_MODE = false; // Real backend is running
 
+// Prevent duplicate event listener initialization across multiple definitions/calls
+// This guards against attaching handlers twice which can re-trigger file chooser
+window.__dashboard_listeners_initialized = window.__dashboard_listeners_initialized || false;
+
 // Serper API Configuration
 const SERPER_CONFIG = {
     baseUrl: 'https://google.serper.dev/search',
@@ -2802,6 +2806,11 @@ async function clearAnalysisHistory() {
  * Initialize all event listeners
  */
 function initializeEventListeners() {
+    // Guard against double-initialization
+    if (window.__dashboard_listeners_initialized) {
+        return;
+    }
+    window.__dashboard_listeners_initialized = true;
     // Main analyze button
     const analyzeButton = document.getElementById('analyze-button');
     if (analyzeButton) {
@@ -2907,6 +2916,8 @@ function initializeEventListeners() {
                  } else {
                      console.warn('[DASHBOARD] OCR module not loaded. Image will be processed without text extraction.');
                  }
+                // Blur input to avoid accidental re-clicks on some browsers
+                try { e.target.blur(); } catch {}
             }
         });
     }
@@ -3070,6 +3081,31 @@ function initializeEventListeners() {
                 } else {
                     alert(message);
                 }
+            }
+        });
+    }
+    
+    // Refresh Site Button
+    const refreshSiteBtn2 = document.getElementById('refresh-site-btn');
+    if (refreshSiteBtn2) {
+        refreshSiteBtn2.addEventListener('click', () => {
+            try {
+                // Full page reload clears all user-entered text and images
+                window.location.reload();
+            } catch (err) {
+                console.warn('[DASHBOARD] Failed to refresh site:', err);
+            }
+        });
+    }
+
+    // Refresh Site Button
+    const refreshSiteBtn = document.getElementById('refresh-site-btn');
+    if (refreshSiteBtn) {
+        refreshSiteBtn.addEventListener('click', () => {
+            try {
+                window.location.reload();
+            } catch (err) {
+                console.warn('[DASHBOARD] Failed to refresh site:', err);
             }
         });
     }
@@ -4018,6 +4054,11 @@ function initializeSidebarResize() {
  * Initialize all event listeners
  */
 function initializeEventListeners() {
+    // Guard against double-initialization
+    if (window.__dashboard_listeners_initialized) {
+        return;
+    }
+    window.__dashboard_listeners_initialized = true;
     // Main analyze button
     const analyzeButton = document.getElementById('analyze-button');
     if (analyzeButton) {
@@ -4123,6 +4164,8 @@ function initializeEventListeners() {
                  } else {
                      console.warn('[DASHBOARD] OCR module not loaded. Image will be processed without text extraction.');
                  }
+                // Blur input to avoid accidental re-clicks on some browsers
+                try { e.target.blur(); } catch {}
             }
         });
     }

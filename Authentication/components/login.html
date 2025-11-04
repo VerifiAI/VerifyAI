@@ -3,454 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Hybrid Deep Learning with Explainable AI</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto+Slab:wght@400;500;600&display=swap" rel="stylesheet">
-    <!-- Firebase App (the core Firebase SDK) is always required and must be listed first -->
+    <title>Login • VerifyAI</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <!-- Add Firebase products that you want to use -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         :root {
-            --obsidian: #0d1b2a;
-            --obsidian-light: #1b263b;
-            --sapphire: #00c4cc;
-            --gold: #f1c40f;
-            --error: #ff4444;
+            --bg-1: #0d0b1f;
+            --bg-2: #1a1442;
+            --accent: #7c4dff;
+            --accent-2: #00e5ff;
+            --glow: rgba(124, 77, 255, 0.5);
+            --text: #e6e6ff;
+            --muted: #b0b3c2;
+            --success: #00c853;
+            --error: #ff5252;
             --google-blue: #4285f4;
             --google-red: #ea4335;
             --google-yellow: #fbbc05;
             --google-green: #34a853;
         }
 
+        * { box-sizing: border-box; }
         body {
-            font-family: 'Montserrat', sans-serif;
-            background: linear-gradient(135deg, var(--obsidian) 0%, var(--obsidian-light) 100%);
+            margin: 0;
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: #fff;
-            position: relative;
+            color: var(--text);
+            font-family: 'Poppins', 'Montserrat', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(1200px circle at 10% 10%, #211d4a 0%, var(--bg-1) 35%, var(--bg-2) 100%);
             overflow: hidden;
         }
 
-        /* Particle effect */
-        .particles {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+        /* Animated aurora background */
+        .aurora {
+            position: fixed;
+            inset: 0;
             pointer-events: none;
+            filter: blur(40px) saturate(120%);
             z-index: 0;
         }
-
-        .particle {
+        .aurora::before, .aurora::after {
+            content: "";
             position: absolute;
-            width: 3px;
-            height: 3px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
+            width: 60vw; height: 60vw;
+            background: radial-gradient(circle at 30% 30%, var(--accent), transparent 60%);
+            animation: floatAurora 18s ease-in-out infinite;
+            opacity: 0.35;
+        }
+        .aurora::after {
+            left: auto; right: -10vw; top: 10vh;
+            background: radial-gradient(circle at 70% 70%, var(--accent-2), transparent 60%);
+            animation-delay: -6s;
+        }
+        @keyframes floatAurora {
+            0%, 100% { transform: translateY(0) translateX(0) scale(1); }
+            50% { transform: translateY(-4vh) translateX(2vw) scale(1.05); }
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            25% { transform: translateY(-50px) translateX(25px); }
-            50% { transform: translateY(-25px) translateX(-25px); }
-            75% { transform: translateY(50px) translateX(25px); }
-        }
+        /* Starfield */
+        .stars { position: fixed; inset: 0; z-index: 0; }
+        .star { position: absolute; width: 2px; height: 2px; background: #fff8; border-radius: 50%; animation: twinkle 3s infinite ease-in-out; }
+        @keyframes twinkle { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
 
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 15px 0 var(--sapphire); }
-            50% { box-shadow: 0 0 25px 5px var(--sapphire); }
+        /* Layout */
+        .container { position: relative; z-index: 2; display: grid; place-items: center; min-height: 100vh; padding: 2rem; }
+        .brand {
+            margin-bottom: 1rem;
+            display: flex; align-items: center; gap: .75rem;
+            letter-spacing: .5px; user-select: none;
         }
+        .brand .logo {
+            width: 42px; height: 42px; border-radius: 12px;
+            background: conic-gradient(from 180deg, var(--accent), var(--accent-2), var(--accent));
+            box-shadow: 0 0 30px var(--glow);
+            filter: hue-rotate(12deg) saturate(120%);
+        }
+        .brand .title { font-weight: 700; font-size: 1.25rem; }
 
-        @keyframes float-card {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        @keyframes shimmer {
-            0% { text-shadow: 0 0 0px var(--gold); }
-            50% { text-shadow: 0 0 10px var(--gold); }
-            100% { text-shadow: 0 0 0px var(--gold); }
-        }
-
-        @keyframes slide-in {
-            0% { transform: translateX(-50px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        @keyframes fade {
-            0% { opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-
-        .login-card {
-            background-color: rgba(13, 27, 42, 0.8);
-            max-width: 400px;
-            width: 90%;
-            padding: 2.5rem;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        /* Card */
+        .card {
             position: relative;
-            z-index: 10;
-            backdrop-filter: blur(10px);
-            border: 2px solid var(--sapphire);
-            animation: float-card 3s ease-in-out infinite, pulseGlow 4s infinite;
+            width: 100%; max-width: 460px;
+            padding: 2rem 1.75rem;
+            border-radius: 18px;
+            background: linear-gradient(180deg, rgba(20,18,45,0.75), rgba(20,18,45,0.65));
+            border: 1px solid rgba(124,77,255,0.25);
+            box-shadow: 0 30px 80px rgba(0,0,0,.35), inset 0 0 30px rgba(124,77,255,0.12);
+            backdrop-filter: blur(16px) saturate(120%);
+            transform: perspective(1000px) rotateX(0) rotateY(0);
+            transition: transform .2s ease-out, box-shadow .3s ease, border-color .3s ease;
         }
-
-        h1 {
-            font-family: 'Roboto Slab', serif;
-            text-align: center;
-            margin-bottom: 2rem;
-            color: #fff;
-            font-size: 1.8rem;
-            letter-spacing: 1px;
-            position: relative;
+        .card:hover { box-shadow: 0 40px 120px rgba(124,77,255,.25), inset 0 0 40px rgba(124,77,255,0.16); border-color: rgba(124,77,255,0.45); }
+        .card .heading {
+            font-size: 1.9rem; font-weight: 700; margin-bottom: .25rem;
+            background: linear-gradient(90deg, #fff, #c8c8ff 40%, #9fdfff);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
         }
+        .card .sub { color: var(--muted); font-size: .95rem; margin-bottom: 1.25rem; }
 
-        h1::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(90deg, var(--sapphire), var(--gold));
-            border-radius: 3px;
+        /* Inputs */
+        .field { margin-bottom: 1rem; }
+        .label { display: block; font-size: .9rem; margin-bottom: .4rem; color: #cfd2ff; }
+        .input {
+            width: 100%; padding: .85rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,.15);
+            background: rgba(255,255,255,.06); color: #fff; outline: none; font-size: .95rem;
+            transition: border .2s ease, box-shadow .2s ease, background .2s ease;
         }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-            position: relative;
-            animation: slide-in 1.5s ease-out forwards;
-            opacity: 0;
+        .input:focus { border-color: var(--accent-2); box-shadow: 0 0 0 4px rgba(0,229,255,.15); background: rgba(255,255,255,.09); }
+        .field.password { position: relative; }
+        .toggle {
+            position: absolute; right: .75rem; top: 50%; transform: translateY(-50%);
+            color: #cfd2ff; cursor: pointer; font-size: .95rem; opacity: .8; transition: opacity .2s;
         }
+        .toggle:hover { opacity: 1; }
 
-        .form-group:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: #fff;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-        }
-
-        input {
-            width: 100%;
-            padding: 0.8rem 1rem;
-            border: 1px solid rgba(0, 196, 204, 0.3);
-            border-radius: 6px;
-            background-color: rgba(27, 38, 59, 0.6);
-            color: #fff;
-            font-family: 'Montserrat', sans-serif;
-            transition: all 0.3s ease;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--sapphire);
-            box-shadow: 0 0 15px var(--sapphire);
-        }
-
-        input:focus + label {
-            animation: shimmer 2s infinite;
-        }
-
-        .password-toggle {
-            position: absolute;
-            right: 10px;
-            top: 38px;
-            cursor: pointer;
-            color: rgba(255, 255, 255, 0.7);
-            transition: opacity 0.5s;
-        }
-
-        .password-toggle:hover {
-            color: var(--sapphire);
-        }
-
+        /* Buttons */
         .btn {
-            display: block;
-            width: 100%;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 6px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            position: relative;
-            overflow: hidden;
+            width: 100%; padding: .9rem 1rem; border-radius: 12px; border: none; cursor: pointer;
+            font-weight: 700; letter-spacing: .5px; transition: transform .08s ease, box-shadow .2s ease, background .2s;
         }
-
-        .btn-primary {
-            background: linear-gradient(45deg, var(--gold), #e67e22);
-            color: #fff;
-            margin-top: 2rem;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .btn-primary:hover {
-            transform: scale(1.1);
-        }
-
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 5px;
-            height: 5px;
-            background: rgba(255, 255, 255, 0.5);
-            opacity: 0;
-            border-radius: 100%;
-            transform: scale(1, 1) translate(-50%);
-            transform-origin: 50% 50%;
-        }
-
-        .btn-primary:active::after {
-            animation: ripple 1s ease-out;
-        }
-
-        @keyframes ripple {
-            0% {
-                transform: scale(0, 0);
-                opacity: 0.5;
-            }
-            100% {
-                transform: scale(20, 20);
-                opacity: 0;
-            }
-        }
-
-        .social-login {
-            margin-top: 1.5rem;
-            text-align: center;
-        }
+        .btn:active { transform: translateY(1px) scale(.995); }
+        .btn-primary { background: linear-gradient(90deg, var(--accent), #5d30ff); color: #fff; box-shadow: 0 10px 28px rgba(124,77,255,.35); }
+        .btn-primary:hover { box-shadow: 0 16px 44px rgba(124,77,255,.5); }
 
         .btn-google {
-            background-color: #fff;
-            color: #757575;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 0.6rem;
-            border-radius: 6px;
-            font-weight: 500;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
-            position: relative;
-            overflow: hidden;
+            margin-top: .75rem;
+            background: #fff; color: #222; display: flex; align-items: center; justify-content: center; gap: 10px;
+            box-shadow: 0 10px 28px rgba(0,0,0,.25);
         }
-
-        .btn-google:hover {
-            animation: bounce 0.8s infinite;
+        .google-icon { display: flex; align-items: center; gap: 6px; }
+        .google-icon span { width: 16px; height: 16px; border-radius: 50%; display: inline-block; }
+        .google-icon span:nth-child(1) { background: var(--google-blue); }
+        .google-icon span:nth-child(2) { background: var(--google-red); }
+        .google-icon span:nth-child(3) { background: var(--google-yellow); }
+        .google-icon span:nth-child(4) { background: var(--google-green); }
+        .btn-google.loading { position: relative; }
+        .btn-google.loading::after {
+            content: ""; position: absolute; right: 16px; width: 18px; height: 18px; border: 2px solid #0002; border-top-color: var(--accent);
+            border-radius: 50%; animation: spin 1s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        .btn-google .loader {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border: 3px solid transparent;
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            opacity: 0;
-            transition: opacity 0.3s;
-            display: none;
+        /* Links */
+        .links { display: flex; justify-content: space-between; margin-top: .85rem; font-size: .9rem; }
+        .links a { color: #9fdfff; text-decoration: none; }
+        .links a:hover { text-decoration: underline; }
+
+        /* Micro-interactions */
+        .hint { margin-top: .8rem; font-size: .85rem; color: var(--muted); }
+        .glimmer {
+            position: absolute; inset: -1px; border-radius: inherit; pointer-events: none;
+            background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.12) 25%, transparent 50%);
+            mask: linear-gradient(#000, #000 30%, transparent 60%);
+            animation: sweep 3.5s ease-in-out infinite;
         }
-        
-        .btn-google .loader {
-            display: none;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(0, 0, 0, 0.1);
-            border-top: 2px solid var(--sapphire);
-            border-radius: 50%;
-            animation: rotate 1s linear infinite;
-            position: absolute;
-            right: 15px;
-        }
+        @keyframes sweep { 0% { transform: translateX(-60%) } 100% { transform: translateX(60%) } }
 
-        .google-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        /* Toast */
+        .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: 20px; padding: .75rem 1rem; border-radius: 10px; background: rgba(0,0,0,.6); color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.35); opacity: 0; pointer-events: none; transition: opacity .3s, transform .3s; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
 
-        .google-icon span {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: -5px;
-        }
-
-        .google-icon span:nth-child(1) { background-color: var(--google-blue); }
-        .google-icon span:nth-child(2) { background-color: var(--google-red); }
-        .google-icon span:nth-child(3) { background-color: var(--google-yellow); }
-        .google-icon span:nth-child(4) { background-color: var(--google-green); }
-
-        .links {
-            margin-top: 1.5rem;
-            text-align: center;
-            font-size: 0.9rem;
-        }
-
-        .links a {
-            color: var(--sapphire);
-            text-decoration: none;
-            transition: all 0.3s;
-            position: relative;
-        }
-
-        .links a::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 1px;
-            bottom: -2px;
-            left: 0;
-            background-color: var(--sapphire);
-            transform: scaleX(0);
-            transform-origin: bottom right;
-            transition: transform 0.3s;
-        }
-
-        .links a:hover {
-            color: var(--gold);
-        }
-
-        .links a:hover::after {
-            transform: scaleX(1);
-            transform-origin: bottom left;
-            background-color: var(--gold);
-        }
-
-        .error-message {
-            background-color: rgba(255, 68, 68, 0.2);
-            color: var(--error);
-            padding: 0.5rem;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-            text-align: center;
-            display: none;
-            animation: fade 2s forwards;
-        }
-
-        .shake {
-            animation: shake 0.5s;
-        }
-
-        @media (max-width: 600px) {
-            .login-card {
-                width: 85%;
-                padding: 1.5rem;
-            }
-
-            h1 {
-                font-size: 1.5rem;
-            }
-
-            .btn-primary {
-                margin-top: 1.5rem;
-            }
+        /* Responsive */
+        @media (max-width: 520px) {
+            .card { padding: 1.6rem 1.2rem; border-radius: 16px; }
+            .card .heading { font-size: 1.7rem; }
         }
     </style>
 </head>
 <body>
-    <div class="particles" id="particles"></div>
-    
-    <div class="login-card">
-        <h1>Fake News Detection</h1>
-        
-        <div class="error-message" id="error-message"></div>
-        
-        <!-- Developer Instructions -->
-        <div id="developer-instructions" style="display: none; margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; font-size: 14px;">
-            <h3 style="margin-top: 0; color: #17a2b8;">How to Fix "Unauthorized Domain" Error</h3>
-            <p>If you're seeing an "unauthorized domain" error, follow these steps:</p>
-            <ol>
-                <li>Go to the <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
-                <li>Select your project: <strong>verifyai-1053a</strong></li>
-                <li>Navigate to <strong>Authentication</strong> > <strong>Settings</strong> > <strong>Authorized domains</strong></li>
-                <li>Add your domain (e.g., <code>localhost</code>, <code>127.0.0.1</code>, or your custom domain)</li>
-                <li>Save changes and refresh this page</li>
-            </ol>
-            <button onclick="this.parentElement.style.display='none'" style="background: #17a2b8; color: white; border: none; padding: 5px 10px; cursor: pointer;">Close</button>
+    <div class="aurora"></div>
+    <div class="stars" id="stars"></div>
+    <div class="container">
+        <div class="brand">
+            <div class="logo"></div>
+            <div class="title">VerifyAI • Fake News Detection</div>
         </div>
-        
-        <form id="login-form">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" required>
-                <span class="password-toggle" id="password-toggle">👁️</span>
-            </div>
-            
-            <button type="submit" class="btn btn-primary">Login</button>
-        </form>
-        
-        <div class="social-login">
-            <button class="btn btn-google" id="google-login">
-                <div class="google-icon">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <span></span>
+
+        <div class="card" id="card">
+            <div class="glimmer"></div>
+            <div class="heading">Welcome back</div>
+            <div class="sub">Sign in to continue your analysis</div>
+
+            <form id="login-form">
+                <div class="field">
+                    <label class="label" for="email">Email</label>
+                    <input class="input" type="email" id="email" placeholder="you@example.com" required>
                 </div>
-                <span>Sign in with Google</span>
-                <div class="loader"></div>
-            </button>
-        </div>
-        
-        <div class="links">
-            <p><a href="#" id="forgot-password">Forgot Password?</a></p>
-            <p style="margin-top: 0.5rem;">Don't have an account? <a href="#" id="signup">Sign Up</a></p>
+
+                <div class="field password">
+                    <label class="label" for="password">Password</label>
+                    <input class="input" type="password" id="password" placeholder="••••••••" required>
+                    <div class="toggle" id="password-toggle">👁️</div>
+                </div>
+
+                <button class="btn btn-primary" type="submit" id="submit-btn">Login</button>
+            </form>
+
+            <!-- Google sign-in below the fields -->
+            <div class="social-login">
+                <button class="btn btn-google" id="google-login">
+                    <div class="google-icon">
+                        <span></span><span></span><span></span><span></span>
+                    </div>
+                    <span>Sign in with Google</span>
+                </button>
+            </div>
+
+            <div class="links">
+                <a href="#" id="forgot-password">Forgot password?</a>
+                <a href="#" id="signup">Create account</a>
+            </div>
+
+            <div class="hint">By signing in, you agree to our Terms of Service and Privacy Policy.</div>
         </div>
     </div>
 
-    <!-- Firebase Configuration -->
+    <div class="toast" id="toast"></div>
+
     <script>
         // Firebase configuration
         const firebaseConfig = {
@@ -462,195 +231,129 @@
             appId: "1:976752504643:web:043116c43af77b186bc9f6",
             measurementId: "G-0SBXNNFGGB"
         };
-
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-    </script>
-    
-    <script>
-        // Create particles
-        const particlesContainer = document.getElementById('particles');
-        const particleCount = 50;
-        
-        for (let i = 0; i < particleCount; i++) {
-            const particle = document.createElement('div');
-            particle.classList.add('particle');
-            
-            // Random position
-            const posX = Math.random() * 100;
-            const posY = Math.random() * 100;
-            particle.style.left = `${posX}%`;
-            particle.style.top = `${posY}%`;
-            
-            // Random size
-            const size = Math.random() * 3 + 1;
-            particle.style.width = `${size}px`;
-            particle.style.height = `${size}px`;
-            
-            // Random opacity
-            particle.style.opacity = Math.random() * 0.5 + 0.3;
-            
-            // Random animation duration
-            const animDuration = Math.random() * 20 + 10;
-            particle.style.animation = `float ${animDuration}s ease-in-out infinite`;
-            particle.style.animationDelay = `${Math.random() * 5}s`;
-            
-            particlesContainer.appendChild(particle);
+
+        // Starfield generation
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 120; i++) {
+            const s = document.createElement('div');
+            s.className = 'star';
+            s.style.left = Math.random() * 100 + '%';
+            s.style.top = Math.random() * 100 + '%';
+            s.style.animationDelay = (Math.random() * 3) + 's';
+            s.style.opacity = (Math.random() * 0.7 + 0.3);
+            starsContainer.appendChild(s);
         }
-        
+
+        // Fancy tilt interaction
+        const card = document.getElementById('card');
+        let rect = null;
+        const updateRect = () => rect = card.getBoundingClientRect();
+        updateRect();
+        window.addEventListener('resize', updateRect);
+        card.addEventListener('mousemove', (e) => {
+            const x = e.clientX - rect.left - rect.width/2;
+            const y = e.clientY - rect.top - rect.height/2;
+            const rotX = (y / rect.height) * -8;
+            const rotY = (x / rect.width) * 8;
+            card.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+        });
+
+        // Toast helper
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = type === 'error' ? 'rgba(255,82,82,.75)' : type === 'success' ? 'rgba(0,200,83,.75)' : 'rgba(0,0,0,.6)';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2200);
+        }
+
         // Password toggle
         const passwordToggle = document.getElementById('password-toggle');
         const passwordInput = document.getElementById('password');
-        
         passwordToggle.addEventListener('click', () => {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                passwordToggle.textContent = '🔒';
-            } else {
-                passwordInput.type = 'password';
-                passwordToggle.textContent = '👁️';
-            }
+            const isText = passwordInput.type === 'text';
+            passwordInput.type = isText ? 'password' : 'text';
+            passwordToggle.textContent = isText ? '👁️' : '🔒';
         });
-        
-        // Form submission with Firebase
+
+        // Form submission
         const loginForm = document.getElementById('login-form');
-        const errorMessage = document.getElementById('error-message');
-        
+        const submitBtn = document.getElementById('submit-btn');
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            
-            // Simple validation
+
             if (!email || !password) {
-                showError('Please fill in all fields');
+                showToast('Please fill in all fields', 'error');
                 return;
             }
-            
-            if (!validateEmail(email)) {
-                showError('Please enter a valid email address');
-                return;
-            }
-            
-            // Show loading state
-            const submitBtn = loginForm.querySelector('button[type="submit"]');
-            const originalBtnText = submitBtn.textContent;
-            submitBtn.textContent = 'Logging in...';
+
+            const original = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in…';
             submitBtn.disabled = true;
-            
-            // Firebase email/password authentication
+
             auth.signInWithEmailAndPassword(email, password)
                 .then((userCredential) => {
-                    // Successful login
-                    console.log('Login successful:', userCredential.user);
-                    window.location.href = '../../Main page/index.html';
+                    showToast('Welcome back! Redirecting…', 'success');
+                    // Lightweight celebration: subtle glow pulse
+                    card.style.boxShadow = '0 40px 120px rgba(124,77,255,.55), inset 0 0 60px rgba(124,77,255,.25)';
+                    setTimeout(() => {
+                        window.location.href = '../../Main page/index.html';
+                    }, 900);
                 })
                 .catch((error) => {
-                    // Failed login
-                    console.error('Login error:', error);
-                    
-                    // Special handling for unauthorized domain error
                     if (error.code === 'auth/unauthorized-domain') {
-                        showError('This domain is not authorized for Firebase authentication. Please add it to the authorized domains in the Firebase console.');
-                        console.log('To fix this error: Go to Firebase console > Authentication > Settings > Authorized domains and add your domain (e.g., localhost).');
+                        showToast('Unauthorized domain. Add it in Firebase → Authentication → Settings.', 'error');
                     } else {
-                        showError(error.message || 'Invalid email or password');
+                        showToast(error.message || 'Invalid email or password', 'error');
                     }
-                    
-                    loginForm.classList.add('shake');
-                    setTimeout(() => {
-                        loginForm.classList.remove('shake');
-                    }, 500);
-                    
-                    // Reset button
-                    submitBtn.textContent = originalBtnText;
+                    submitBtn.textContent = original;
                     submitBtn.disabled = false;
                 });
         });
-        
-        // Google login with Firebase
+
+        // Google login
         const googleLogin = document.getElementById('google-login');
         googleLogin.addEventListener('click', () => {
-            // Show loading state
-            const loader = googleLogin.querySelector('.loader');
-            loader.style.display = 'inline-block';
+            googleLogin.classList.add('loading');
             googleLogin.disabled = true;
-            googleLogin.querySelector('span').textContent = 'Connecting...';
-            
-            // Create Google auth provider
             const provider = new firebase.auth.GoogleAuthProvider();
-            // Add scopes for additional permissions if needed
             provider.addScope('profile');
             provider.addScope('email');
-            
-            // Sign in with popup
+
             auth.signInWithPopup(provider)
                 .then((result) => {
-                    // Successful Google login
-                    console.log('Google login successful:', result.user);
-                    // You can access Google OAuth tokens here
-                    const credential = result.credential;
-                    const token = credential.accessToken;
-                    // The signed-in user info
-                    const user = result.user;
-                    window.location.href = '../../Main page/index.html';
+                    showToast('Signed in with Google! Redirecting…', 'success');
+                    setTimeout(() => {
+                        window.location.href = '../../Main page/index.html';
+                    }, 900);
                 })
                 .catch((error) => {
-                    // Failed Google login
-                    console.error('Google login error:', error);
-                    
-                    // Special handling for unauthorized domain error
                     if (error.code === 'auth/unauthorized-domain') {
-                        showError('This domain is not authorized for Firebase authentication. Please add it to the authorized domains in the Firebase console.');
-                        console.log('To fix this error: Go to Firebase console > Authentication > Settings > Authorized domains and add your domain (e.g., localhost).');
+                        showToast('Add your domain in Firebase → Auth → Authorized domains.', 'error');
                     } else {
-                        showError(error.message || 'Google sign-in failed');
+                        showToast(error.message || 'Google sign-in failed', 'error');
                     }
-                    
-                    // Reset button
-                    loader.style.display = 'none';
+                    googleLogin.classList.remove('loading');
                     googleLogin.disabled = false;
-                    googleLogin.querySelector('span').textContent = 'Sign in with Google';
                 });
         });
-        
-        // Check if user is already signed in
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                // User is signed in
-                console.log('User is already signed in:', user);
-                // Redirect to main page if needed
-                window.location.href = '../../Main page/index.html';
-            }
-        }, (error) => {
-            // Handle auth state change error
-            console.error('Auth state change error:', error);
-            if (error.code === 'auth/unauthorized-domain') {
-                showError('This domain is not authorized for Firebase authentication. Please add it to the authorized domains in the Firebase console.');
-                console.log('To fix this error: Go to Firebase console > Authentication > Settings > Authorized domains and add your domain (e.g., localhost).');
-            }
+
+        // Helpful links (simulate)
+        document.getElementById('forgot-password').addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Password reset link sent (simulation)', 'info');
         });
-        
-        // Helper functions
-        function showError(message) {
-            errorMessage.textContent = message;
-            errorMessage.style.display = 'block';
-            
-            // Show developer instructions if it's an unauthorized domain error
-            if (message.includes('not authorized for Firebase authentication')) {
-                document.getElementById('developer-instructions').style.display = 'block';
-            } else {
-                setTimeout(() => {
-                    errorMessage.style.display = 'none';
-                }, 3000);
-            }
-        }
-        
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
+        document.getElementById('signup').addEventListener('click', (e) => {
+            e.preventDefault();
+            showToast('Redirecting to signup (simulation)', 'info');
+        });
     </script>
 </body>
 </html>

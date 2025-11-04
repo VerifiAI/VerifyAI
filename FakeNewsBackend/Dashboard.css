@@ -671,6 +671,41 @@ body {
     box-shadow: none;
 }
 
+/* Remove Image Button Styles */
+.ocr-remove-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.ocr-remove-btn:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.ocr-remove-btn:active {
+    transform: translateY(0);
+}
+
+.ocr-remove-btn:disabled {
+    background: #f87171;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* Universal Verification Results Styles */
 .verification-verdict {
     margin-bottom: 2rem;
@@ -4697,4 +4732,21 @@ textarea:focus {
     .fact-check-section {
         break-inside: avoid;
     }
+}
+/* Refresh Site button styles */
+.refresh-btn {
+    background: #3498db;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.refresh-btn:hover {
+    background: #2980b9;
 }
