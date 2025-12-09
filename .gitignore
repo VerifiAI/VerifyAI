@@ -9,8 +9,8 @@ node_modules/
 
 # OS/editor files
 .DS_Store
-.env
-.env.*
+# .env
+# .env.*
 *.log
 
 # Build and cache
