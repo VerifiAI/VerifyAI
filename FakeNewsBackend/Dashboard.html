@@ -20,20 +20,7 @@
                 <h1 class="logo-title">🤖 FakeNews AI</h1>
                 <p class="logo-subtitle">Real-time Verification</p>
             </div>
-            
-            <div class="user-section">
-                <div class="user-info">
-                    <i class="fas fa-user-circle user-icon"></i>
-                    <div class="user-details">
-                        <span class="user-label">User</span>
-                        <span class="user-status" id="user-status">Not logged in</span>
-                    </div>
-                </div>
-                <button class="auth-button" id="auth-button">
-                    <i class="fas fa-sign-in-alt"></i>
-                    Login
-                </button>
-            </div>
+
             
             <div class="detection-options">
                 <h3 class="section-title">Multi-modal Detection</h3>
@@ -186,7 +173,7 @@
             <section class="analysis-card">
                 <div class="card-header">
                     <h3 class="card-title">🎯 Final Result</h3>
-                    <button class="card-action-btn" id="final-result-btn">
+                    <button class="card-action-btn" id="final-result-btn" >
                         <i class="fas fa-check-circle"></i>
                     </button>
                 </div>
@@ -201,7 +188,6 @@
                 <div class="card-header">
                     <h3 class="card-title">🧠 AI Explainability</h3>
                     <button class="card-action-btn" id="ai-explainability-btn">
-                        <i class="fas fa-brain"></i>
                     </button>
                 </div>
                 <p class="card-subtitle">Understanding AI decision process</p>
@@ -221,7 +207,7 @@
                             <option value="cnn">CNN - US general news</option>
                             <option value="fox">Fox News - US general news</option>
                             <option value="nyt">New York Times - US general news</option>
-                            <option value="thehindu">The Hindu - India general news</option>
+                            
                             <option value="ndtv">NDTV - India general news</option>
                         </select>
                         <button class="refresh-button" id="refresh-news-btn">
@@ -328,22 +314,23 @@
 
                 </div>
             </section>
-            
             <!-- Recent Analysis History -->
-            <section class="history-section">
-                <div class="section-header">
-                    <h2 class="section-title">📊 Recent Analysis History</h2>
-                    <button class="clear-history-btn" id="clear-history-btn">
-                        <i class="fas fa-trash-alt"></i>
-                        Clear History
-                    </button>
-                </div>
-                <div class="history-container resizable-content" id="history-container">
-                    <!-- Dynamic history items will be injected here by JavaScript -->
-                </div>
-            </section>
-        </main>
-    </div>
+<section class="history-section">
+  <div class="section-header">
+    <h2 class="section-title">📊 Recent Analysis History</h2>
+    <button class="clear-history-btn" id="clear-history-btn">
+      <i class="fas fa-trash-alt"></i>
+      Clear History
+    </button>
+  </div>
+  <div class="history-container resizable-content" id="history-container">
+    <!-- Dynamic history items will be injected here by JavaScript -->
+  </div>
+</section>
+</main>
+</div>
+            
+            
     
     <!-- Loading Overlay -->
     <div class="loading-overlay" id="loading-overlay">

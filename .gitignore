@@ -1,49 +1,38 @@
-# Environment variables with API keys - NEVER COMMIT!
-.env
-config_env
+# Python virtual environments and site-packages
+venv/
+**/venv/
+**/venv_*/
+FakeNewsBackend/venv_py310/
+FakeNewsBackend/environments/venv/
+FakeNewsBackend/environments/venv_py310/
 
-# OS files
+# Node modules
+node_modules/
+**/node_modules/
+
+# OS/editor files
 .DS_Store
-*.swp
-*.swo
-*~
-
-# IDE
-.vscode/
-.idea/
-*.sublime-*
-
-# Logs
+.env
+.env.*
 *.log
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-venv_py310/
-env/
-ENV/
-*.egg-info/
-.pytest_cache/
-
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build outputs
-build/
+# Build and cache
 dist/
-dist-ssr/
-*.local
-
-# Cache
+build/
 .cache/
-cache/
+**/__pycache__/
+*.pyc
+ /Authentication/
+ /data_loader.log
 
-# Backup
-*.backup
+# User added
+FakeNewsBackend/cache/
+FakeNewsBackend/environments/cache/
+FakeNewsBackend/data_loader.log
+*.dylib
+*.so
+*.pkl
+
+node_modules
+node_modules
+node_modules

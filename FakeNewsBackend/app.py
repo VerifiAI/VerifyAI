@@ -10,7 +10,7 @@ import tempfile
 from werkzeug.utils import secure_filename
 
 # Flask imports
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, redirect
 from flask_cors import CORS
 
 # ML and data processing imports
@@ -1108,8 +1108,7 @@ def bad_request(error):
 # Frontend Routes
 @app.route('/')
 def serve_dashboard():
-    """Serve the main dashboard HTML file"""
-    return send_from_directory('.', 'index.html')
+    return redirect('/Dashboard.html', code=302)
 
 @app.route('/<path:filename>')
 def serve_static_files(filename):

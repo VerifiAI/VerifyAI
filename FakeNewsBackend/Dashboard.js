@@ -3,8 +3,8 @@
 // =============================================================================
 
 // Updated for FastAPI backend integration
-const API_ROOT = "http://localhost:5001/api";
-const API_BASE_URL = 'http://localhost:5001'; // Base URL without /api prefix
+const API_ROOT = "http://localhost:5002/api";
+const API_BASE_URL = window.location.origin; // Use current origin to match running backend
 const POLLING_INTERVAL = 30000; // 30 seconds for live feed updates
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 1000; // 1 second
@@ -1382,32 +1382,7 @@ async function updateFinalResult(analysisResult) {
         container.innerHTML = '<p class="no-data">Enter content to analyze, then try again.</p>';
         return null;
     }
-
-    // Ensure we have Serper results for THIS query to drive the verdict
-    let serperReport = dashboardState.serperReport;
-    const needsSerperRefresh = !serperReport || (serperReport.claim && serperReport.claim !== queryText);
-    if (needsSerperRefresh) {
-        // Auto-run Serper analysis using current content input
-
-        container.innerHTML = `
-            <div class="loading-container">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Collecting sources via SerperAPI…</p>
-            </div>
-        `;
-
-        try {
-            const report = await verifyNewsClaimWithSerper(queryText);
-            await displayIntegratedResults(report);
-            serperReport = report;
-        } catch (err) {
-            console.error('Serper auto-run failed:', err);
-            showError('final-result-content', 'Unable to collect sources via SerperAPI.');
-            return null;
-        }
-    }
-
-    // Show lightweight loading state
+    // Prefer Mistral verdict as the source of truth
     container.innerHTML = `
         <div class="loading-container">
             <i class="fas fa-spinner fa-spin"></i>
@@ -1415,33 +1390,125 @@ async function updateFinalResult(analysisResult) {
         </div>
     `;
 
+    // Ensure Serper sources are available to feed Mistral
+    let serperReport = dashboardState.serperReport;
+    const needsSerperRefresh = !serperReport || (serperReport.claim && serperReport.claim !== queryText);
+    if (needsSerperRefresh) {
+        try {
+            const report = await verifyNewsClaimWithSerper(queryText);
+            await displayIntegratedResults(report);
+            serperReport = report;
+        } catch (err) {
+            console.error('Serper auto-run failed:', err);
+            // Proceed without sources; Mistral will receive minimal context
+            serperReport = serperReport || { claim: queryText, analysis: {} };
+        }
+    }
+
+    // Call Mistral and render its verdict immediately
     try {
         const claimText = queryText || serperReport.claim || analysisResult?.text || analysisResult?.input_text || '';
         const sourcesPayload = buildSerperSourcesPayload(serperReport);
 
         const mistralResult = await callMistralForVerdict({ claim: claimText, sources: sourcesPayload });
 
-        // Persist verdict for explainability
-        dashboardState.finalVerdict = mistralResult;
+        // Persist with explicit source tagging
+        dashboardState.finalVerdict = { ...mistralResult, source: 'mistral' };
         dashboardState.finalVerdictClaim = claimText;
 
-        // Render verdict only (REAL or FAKE)
         const verdict = (mistralResult.verdict || '').toUpperCase();
         const isReal = verdict === 'REAL';
+        const conf = typeof mistralResult.confidence === 'number' ? mistralResult.confidence : 0;
+        const confidencePct = conf > 1 ? conf : (conf * 100);
+        const rationale = mistralResult.rationale || '';
+
         container.innerHTML = `
             <div class="final-verdict">
                 <div class="verdict-badge ${isReal ? 'real' : 'fake'}">
                     <i class="fas ${isReal ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
                     ${isReal ? 'REAL' : 'FAKE'}
                 </div>
+                <div class="confidence-score">
+                    <span class="confidence-label">Confidence:</span>
+                    <span class="confidence-value">${confidencePct.toFixed(1)}%</span>
+                </div>
+                ${rationale ? `<div class="mistral-rationale"><i class="fas fa-lightbulb"></i> ${rationale}</div>` : ''}
             </div>
         `;
 
+        // Trigger cross-verification in the background for context only
+        (async () => {
+            try {
+                const cvRes = await fetch('/api/cross-verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: queryText,
+                        perform_serper_analysis: true
+                    })
+                });
+                const cvData = await cvRes.json();
+                if (cvRes.ok && cvData?.success) {
+                    const cv = cvData.verification_result?.crossVerification || cvData.verification_result;
+                    dashboardState.crossVerification = cv;
+                }
+            } catch (cvErr) {
+                console.error('Final Result (Cross-Verification background) error:', cvErr);
+            }
+        })();
+
         return mistralResult;
-    } catch (error) {
-        console.error('Final Result (Mistral) error:', error);
-        showError('final-result-content', 'Unable to generate final verdict from sources.');
-        return null;
+    } catch (mErr) {
+        console.error('Final Result (Mistral) error:', mErr);
+
+        // Fallback: attempt cross-verification and render if available
+        try {
+            container.innerHTML = `
+                <div class="loading-container">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cross-verifying claim against credible sources…</p>
+                </div>
+            `;
+            const cvRes = await fetch('/api/cross-verify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    content: queryText,
+                    perform_serper_analysis: true
+                })
+            });
+            const cvData = await cvRes.json();
+            if (cvRes.ok && cvData?.success) {
+                const cv = cvData.verification_result?.crossVerification;
+                const verdict = (cv?.verdict || '').toUpperCase();
+                if (verdict === 'REAL' || verdict === 'FAKE') {
+                    const isReal = verdict === 'REAL';
+                    const conf = typeof cv?.confidence === 'number' ? cv.confidence : 0;
+                    const confidencePct = conf > 1 ? conf : (conf * 100);
+                    container.innerHTML = `
+                        <div class="final-verdict">
+                            <div class="verdict-badge ${isReal ? 'real' : 'fake'}">
+                                <i class="fas ${isReal ? 'fa-check-circle' : 'fa-exclamation-triangle'}"></i>
+                                ${verdict}
+                            </div>
+                            <div class="confidence-score">
+                                <span class="confidence-label">Confidence:</span>
+                                <span class="confidence-value">${confidencePct.toFixed(1)}%</span>
+                            </div>
+                        </div>
+                    `;
+                    dashboardState.finalVerdict = { verdict, confidence: cv?.confidence || 0, source: 'cross-verification' };
+                    dashboardState.finalVerdictClaim = queryText;
+                    return { verdict, confidence: cv?.confidence || 0 };
+                }
+            }
+            showError('final-result-content', 'Unable to generate final verdict.');
+            return null;
+        } catch (cvErr) {
+            console.error('Final Result (Cross-Verification fallback) error:', cvErr);
+            showError('final-result-content', 'Unable to generate final verdict.');
+            return null;
+        }
     }
 }
 
@@ -2683,7 +2750,7 @@ async function loadAnalysisHistory() {
     try {
         showLoading('history-container');
         
-        const response = await fetchWithRetry(`${API_BASE_URL}/history`);
+        const response = await fetchWithRetry(`${API_ROOT}/history`);
         const result = await response.json();
         
         if (result.status === 'success' && result.data) {
@@ -2779,7 +2846,7 @@ function reanalyzeHistoryItem(itemId) {
  */
 async function clearAnalysisHistory() {
     try {
-        const response = await fetchWithRetry(`${API_BASE_URL}/clear-history`, {
+        const response = await fetchWithRetry(`${API_ROOT}/clear-history`, {
             method: 'DELETE'
         });
         
