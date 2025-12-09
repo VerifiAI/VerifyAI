@@ -1,10 +1,7 @@
 # Python virtual environments and site-packages
 venv/
-**/venv/
-**/venv_*/
-FakeNewsBackend/venv_py310/
-FakeNewsBackend/environments/venv/
-FakeNewsBackend/environments/venv_py310/
+# **/venv/
+# **/venv_*/
 
 # Node modules
 node_modules/
